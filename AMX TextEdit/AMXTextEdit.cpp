@@ -11,6 +11,7 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 : wxFrame(NULL, -1, title, wxPoint(-1, -1), wxSize(580, 640))
 {
 	SetIcon(wxIcon(wxT("MAIN_ICON")));
+	lastFindPos = -1;
 
 	mainMenu = new wxMenuBar;
 	
@@ -28,6 +29,9 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	editMenu->Append(new wxMenuItem(editMenu, wxID_COPY, wxT("Copy\tCtrl+C"), wxT("Copy selected text")));
 	editMenu->Append(new wxMenuItem(editMenu, wxID_CUT, wxT("Cut\tCtrl+X"), wxT("Cut selected text")));
 	editMenu->Append(new wxMenuItem(editMenu, wxID_PASTE, wxT("Paste\tCtrl+V"), wxT("Paste copied text")));
+	editMenu->Append(new wxMenuItem(editMenu, -1, wxEmptyString, wxEmptyString, wxITEM_SEPARATOR));
+	editMenu->Append(new wxMenuItem(editMenu, wxID_FIND, wxT("Find\tCtrl+F"), wxT("Find something")));
+	editMenu->Append(new wxMenuItem(editMenu, wxID_REPLACE, wxT("Replace\tCtrl+H"), wxT("Replace something")));
 	mainMenu->Append(editMenu, wxT("&Edit"));
 
 	wxMenu* fontMenu = new wxMenu;
@@ -57,9 +61,117 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	Connect(wxID_COPY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_CUT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_PASTE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
+	Connect(wxID_FIND, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
+	Connect(wxID_REPLACE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(ID_MENU_SELECTFONT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Font));
 
+	Connect(wxEVT_FIND, wxFindDialogEventHandler(AMXTextEdit::OnFind));
+	Connect(wxEVT_FIND_NEXT, wxFindDialogEventHandler(AMXTextEdit::OnFind));
+	Connect(wxEVT_FIND_REPLACE, wxFindDialogEventHandler(AMXTextEdit::OnReplace));
+	Connect(wxEVT_FIND_REPLACE_ALL, wxFindDialogEventHandler(AMXTextEdit::OnReplaceAll));
+	Connect(wxEVT_FIND_CLOSE, wxFindDialogEventHandler(AMXTextEdit::OnFindClose));
+
 	Centre();
+
+	AddNewPage();
+}
+
+int AMXTextEdit::DoFind(wxString needle, int flags)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+	
+	int pos;
+
+	if (lastFindPos == -1)
+	{
+		lastFindPos = pos = page->txtBody->FindText(0, page->txtBody->GetTextLength(), needle, flags);
+	}
+	else
+	{
+		lastFindPos = pos = page->txtBody->FindText(lastFindPos + 1, page->txtBody->GetTextLength(), needle, flags);
+	}
+
+	if (pos != -1)
+	{
+		page->txtBody->SetFocus();
+		page->txtBody->SetSelectionStart(pos);
+		page->txtBody->SetSelectionEnd(pos + needle.Length());
+	}
+
+	return pos;
+}
+
+bool AMXTextEdit::DoReplace(wxString str, wxString rep, int flags, bool replaceAll = false)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+	
+	if (page->txtBody->GetSelectedText() == str)
+	{
+		page->txtBody->ReplaceSelection(rep);
+		DoFind(str, flags);
+		return true;
+	}
+
+	int pos = DoFind(str, flags);
+	
+	if (replaceAll)
+	{
+		bool anyReplaced = false;
+
+		while (pos != -1)
+		{
+			page->txtBody->Replace(pos, pos + str.Length(), rep);
+			pos = DoFind(str, flags);
+			anyReplaced = true;
+		}
+
+		return anyReplaced;
+	}
+
+	if (pos == -1) return false;
+	
+	page->txtBody->Replace(pos, pos + str.Length(), rep);
+	
+	return true;
+}
+
+void AMXTextEdit::OnFind(wxFindDialogEvent& event)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	int pos = DoFind(event.GetFindString(), event.GetFlags());
+
+	if (pos == -1)
+	{
+		wxMessageBox(wxT("No more matches!"), wxT("AMX TextEdit - Find")); 
+	}
+}
+
+void AMXTextEdit::OnReplace(wxFindDialogEvent& event)
+{
+	if (!DoReplace(event.GetFindString(), event.GetReplaceString(), event.GetFlags()))
+	{
+		wxMessageBox(wxT("No more matches."));
+	}
+}
+
+void AMXTextEdit::OnReplaceAll(wxFindDialogEvent& event)
+{
+	if (DoReplace(event.GetFindString(), event.GetReplaceString(), event.GetFlags(), true)) 
+	{ 
+		wxMessageBox(wxT("Replacements made.")); 
+	}
+	else 
+	{ 
+		wxMessageBox(wxT("No replacements made."));
+	}
+}
+
+void AMXTextEdit::OnFindClose(wxFindDialogEvent& event)
+{
+	lastFindPos = -1;
+	frDlg->Destroy(); 
+	frDlg = NULL;
 }
 
 void AMXTextEdit::EnableEditMenus(bool e = true)
@@ -71,6 +183,7 @@ void AMXTextEdit::EnableEditMenus(bool e = true)
 	FindItemInMenuBar(wxID_CUT)->Enable(e);
 	FindItemInMenuBar(wxID_PASTE)->Enable(e);
 	FindItemInMenuBar(ID_MENU_SELECTFONT)->Enable(e);
+	FindItemInMenuBar(wxID_FIND)->Enable(e);
 }
 
 AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
@@ -85,7 +198,13 @@ AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
 	page->filename = wxEmptyString;
 
 	wxBoxSizer* vSizer = new wxBoxSizer(wxVERTICAL);
-	page->txtBody = new wxRichTextCtrl(page, -1, wxT(""));
+
+	page->txtBody = new wxStyledTextCtrl(page, -1, wxDefaultPosition, wxDefaultSize, wxSTC_STYLE_LINENUMBER);
+	page->txtBody->SetMarginType(0, wxSTC_MARGIN_NUMBER);
+	page->txtBody->SetMarginWidth(0, 25);
+	page->txtBody->StyleSetForeground(wxSTC_STYLE_LINENUMBER, wxColour(75, 75, 75));
+	page->txtBody->StyleSetBackground(wxSTC_STYLE_LINENUMBER, wxColour(220, 220, 220));
+		
 	vSizer->Add(page->txtBody, 1, wxALL | wxEXPAND, 5);
 	page->SetSizer(vSizer);
 	
@@ -95,7 +214,8 @@ AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
 void AMXTextEdit::AddNewPage()
 {
 	AMXPage *newPage = NewPage(mainBook);
-	mainBook->InsertPage(newPage->id, newPage, "New Page", true);
+	mainBook->InsertPage(newPage->id, newPage, "Untitled", true);
+	newPage->txtBody->SetFocus();
 }
 
 void AMXTextEdit::OnClose(wxCloseEvent& event)
@@ -115,8 +235,7 @@ void AMXTextEdit::OnClose(wxCloseEvent& event)
 
 void AMXTextEdit::About(wxCommandEvent& event)
 {
-	wxMessageDialog *dial = new wxMessageDialog(this, wxT("AMX TextEdit\nA simple, tabbed text editor.\n\n(c) Afaan Bilal\n\nwww.coderevolution.tk\ngoogle.com/+AfaanBilal"), wxT("About AMX TextEdit"), wxOK | wxICON_INFORMATION);
-	dial->ShowModal();
+	wxMessageBox(wxT("AMX TextEdit\nA simple, tabbed text editor.\n\n(c) Afaan Bilal\n\nwww.coderevolution.tk\ngoogle.com/+AfaanBilal"), wxT("About AMX TextEdit"), wxICON_INFORMATION);
 }
 
 void AMXTextEdit::Exit(wxCommandEvent& event)
@@ -155,6 +274,8 @@ void AMXTextEdit::Open(wxCommandEvent& event)
 		mainBook->SetPageText(page->id, page->filename.AfterLast('\\'));
 		GetStatusBar()->SetStatusText(wxT("Load successfull!"));
 	}
+
+	delete openFileDialog;
 }
 
 void AMXTextEdit::SaveFile(AMXPage* page)
@@ -205,8 +326,8 @@ void AMXTextEdit::Save(wxCommandEvent& event)
 							}
 
 							SaveFile(page);
-							(new wxMessageDialog(this, wxT("Save successfull!"), "AMX TextEdit", wxOK | wxICON_INFORMATION))->ShowModal();
 						}
+						delete saveFileDialog;
 						break;
 	}
 
@@ -230,16 +351,68 @@ void AMXTextEdit::Edit(wxCommandEvent& event)
 		break;
 
 	case wxID_COPY:
-		page->txtBody->Copy();
+		if (page->txtBody->CanCopy())
+		{
+			page->txtBody->Copy();
+		}
 		break;
 
 	case wxID_CUT:
-		page->txtBody->Cut();
+		if (page->txtBody->CanCut())
+		{
+			page->txtBody->Cut();
+		}
 		break;
 
 	case wxID_PASTE:
-		page->txtBody->Paste();
+		if (page->txtBody->CanPaste())
+		{
+			page->txtBody->Paste();
+		}
 		break;
+
+	case wxID_FIND:
+		if (!page->txtBody->IsEmpty())
+		{
+			if (frDlg) 
+			{ 
+				delete frDlg; 
+				frDlg = NULL; 
+			}
+			else 
+			{
+				frData;
+				frDlg = new wxFindReplaceDialog(this, &frData, wxT("AMX TextEdit - Find"));
+				frDlg->Show(true);
+			}
+		}
+		else
+		{
+			GetStatusBar()->SetStatusText("Nothing in there yet. No haystack, no finding needle!");
+		}
+		break;
+
+	case wxID_REPLACE:
+		if (!page->txtBody->IsEmpty())
+		{
+			if (frDlg)
+			{
+				delete frDlg;
+				frDlg = NULL;
+			}
+			else
+			{
+				frData;
+				frDlg = new wxFindReplaceDialog(this, &frData, wxT("AMX TextEdit - Find"), wxFR_REPLACEDIALOG);
+				frDlg->Show(true);
+			}
+		}
+		else
+		{
+			GetStatusBar()->SetStatusText("Nothing in there yet. No haystack, no replacing needle!");
+		}
+		break;
+
 	}
 }
 
@@ -256,13 +429,15 @@ void AMXTextEdit::Font(wxCommandEvent& event)
 	{
 	case ID_MENU_SELECTFONT:
 	{
-							   wxFontDialog *fontDialog = new wxFontDialog(this);
+							   wxFontDialog* fontDialog = new wxFontDialog(this);
 
 							   if (fontDialog->ShowModal() == wxID_OK) 
 							   {
-								   page->txtBody->SetFont(fontDialog->GetFontData().GetChosenFont());
+								   page->txtBody->StyleSetFont(wxSTC_STYLE_DEFAULT, fontDialog->GetFontData().GetChosenFont());
 								   GetStatusBar()->SetStatusText(wxT("Font loaded"));
 							   }
+
+							   delete fontDialog;
 	}
 	}
 }
