@@ -15,19 +15,19 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	mainMenu = new wxMenuBar;
 	
 	wxMenu* fileMenu = new wxMenu;
-	fileMenu->Append(new wxMenuItem(fileMenu, wxID_NEW, wxT("&New\tCtrl + N"), wxT("Create a new text document")));
-	fileMenu->Append(new wxMenuItem(fileMenu, wxID_OPEN, wxT("&Open\tCtrl + O"), wxT("Open an existing text document")));
-	fileMenu->Append(new wxMenuItem(fileMenu, wxID_SAVE, wxT("&Save\tCtrl + S"), wxT("Save the current text document")));
-	fileMenu->Append(new wxMenuItem(fileMenu, wxID_SAVEAS, wxT("&Save As...\tCtrl + Shift + S"), wxT("Save the current text document with a new name")));
+	fileMenu->Append(new wxMenuItem(fileMenu, wxID_NEW, wxT("&New\tCtrl+N"), wxT("Create a new text document")));
+	fileMenu->Append(new wxMenuItem(fileMenu, wxID_OPEN, wxT("&Open\tCtrl+O"), wxT("Open an existing text document")));
+	fileMenu->Append(new wxMenuItem(fileMenu, wxID_SAVE, wxT("&Save\tCtrl+S"), wxT("Save the current text document")));
+	fileMenu->Append(new wxMenuItem(fileMenu, wxID_SAVEAS, wxT("&Save As...\tCtrl+Shift+S"), wxT("Save the current text document with a new name")));
 	fileMenu->Append(new wxMenuItem(fileMenu, -1, wxEmptyString, wxEmptyString, wxITEM_SEPARATOR));
-	fileMenu->Append(new wxMenuItem(fileMenu, wxID_EXIT, wxT("E&xit\tCtrl + Q"), wxT("Exit the program")));
+	fileMenu->Append(new wxMenuItem(fileMenu, wxID_EXIT, wxT("E&xit\tCtrl+Q"), wxT("Exit the program")));
 	mainMenu->Append(fileMenu, wxT("&File"));
 
 	wxMenu* editMenu = new wxMenu;
 	editMenu->Append(new wxMenuItem(editMenu, wxID_SELECTALL, wxT("Select All"), wxT("Select all text")));
-	editMenu->Append(new wxMenuItem(editMenu, wxID_COPY, wxT("Copy\tCtrl + C"), wxT("Copy selected text")));
-	editMenu->Append(new wxMenuItem(editMenu, wxID_CUT, wxT("Cut\tCtrl + X"), wxT("Cut selected text")));
-	editMenu->Append(new wxMenuItem(editMenu, wxID_PASTE, wxT("Paste\tCtrl + V"), wxT("Paste copied text")));
+	editMenu->Append(new wxMenuItem(editMenu, wxID_COPY, wxT("Copy\tCtrl+C"), wxT("Copy selected text")));
+	editMenu->Append(new wxMenuItem(editMenu, wxID_CUT, wxT("Cut\tCtrl+X"), wxT("Cut selected text")));
+	editMenu->Append(new wxMenuItem(editMenu, wxID_PASTE, wxT("Paste\tCtrl+V"), wxT("Paste copied text")));
 	mainMenu->Append(editMenu, wxT("&Edit"));
 
 	wxMenu* fontMenu = new wxMenu;
@@ -46,7 +46,6 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	mainBook = new wxNotebook(this, -1, wxDefaultPosition, wxDefaultSize, wxNB_TOP);
 
 	Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(AMXTextEdit::OnClose));
-	Connect(wxEVT_KEY_DOWN, wxKeyEventHandler(AMXTextEdit::ShortcutsHandler));
 
 	Connect(wxID_ABOUT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::About));
 	Connect(wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Exit));
@@ -72,48 +71,6 @@ void AMXTextEdit::EnableEditMenus(bool e = true)
 	FindItemInMenuBar(wxID_CUT)->Enable(e);
 	FindItemInMenuBar(wxID_PASTE)->Enable(e);
 	FindItemInMenuBar(ID_MENU_SELECTFONT)->Enable(e);
-}
-
-void AMXTextEdit::ShortcutsHandler(wxKeyEvent& event)
-{
-	if (event.GetModifiers() == wxMOD_CONTROL)
-	{
-		wxChar key = event.GetUnicodeKey();
-
-		wxCommandEvent ev;
-		switch (key)
-		{
-		case 'Q':
-			this->Exit(ev);
-			break;
-
-		case 'N':
-			this->New(ev);
-			break;
-
-		case 'O':
-			this->Open(ev);
-			break;
-
-		case 'S':
-			ev.SetId(wxID_SAVE);
-			this->Save(ev);
-		}
-	}
-	else if (event.ControlDown() && event.ShiftDown() && !event.AltDown() && !event.MetaDown())
-	{
-		wxChar key = event.GetUnicodeKey();
-
-		wxCommandEvent ev;
-		switch (key)
-		{
-		case 'S':
-			ev.SetId(wxID_SAVEAS);
-			this->Save(ev);
-		}
-	}
-
-	event.Skip();
 }
 
 AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
@@ -146,9 +103,9 @@ void AMXTextEdit::OnClose(wxCloseEvent& event)
 	wxMessageDialog *dial = new wxMessageDialog(NULL, wxT("Are you sure to quit?"), wxT("AMX TextEdit"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
 	
 	int ret = dial->ShowModal();
+	dial->Destroy();
 
 	if (ret == wxID_YES) {
-		dial->Destroy();
 		Destroy();
 	}
 	else {

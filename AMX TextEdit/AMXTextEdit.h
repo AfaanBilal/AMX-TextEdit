@@ -18,15 +18,11 @@ class AMXPage : public wxWindow
 {
 public:
 	AMXPage(wxWindow* parent, wxWindowID id) : wxWindow(parent, id) { }
-	
-	//wxTextCtrl* txtTitle;
-	wxRichTextCtrl* txtBody;
-	//wxButton* btnSetName;
 
 	int id;
-	//wxString title;
-	wxString filename;
 	bool saved;
+	wxString filename;
+	wxRichTextCtrl* txtBody;
 };
 
 class AMXTextEdit : public wxFrame
@@ -40,14 +36,13 @@ class AMXTextEdit : public wxFrame
 
 public:
 	AMXTextEdit(const wxString& title);
-	~AMXTextEdit(){};
+	~AMXTextEdit(){ };
 
 	void OnClose(wxCloseEvent& event);
 	
 	void SaveFile(AMXPage* page);
 	void Exit(wxCommandEvent& event);
 	void About(wxCommandEvent& event);
-	void ShortcutsHandler(wxKeyEvent& event);
 	void New(wxCommandEvent& event);
 	void Open(wxCommandEvent& event);
 	void Save(wxCommandEvent& event);
