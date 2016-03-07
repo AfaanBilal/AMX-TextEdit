@@ -26,6 +26,22 @@ public:
 	wxStyledTextCtrl* txtBody;
 };
 
+class AMXGotoLineDlg : public wxDialog
+{
+public:
+	wxTextCtrl* lineNum;
+	AMXGotoLineDlg(wxWindow* parent) : wxDialog(parent, -1, "AMX TextEdit - Go to Line", wxDefaultPosition, wxSize(280, 70)) 
+	{
+		wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
+		hbox->Add(new wxStaticText(this, -1, wxT("Line number: ")), 0, wxALL | wxEXPAND, 5);
+		this->lineNum = new wxTextCtrl(this, -1, wxT(""));
+		hbox->Add(this->lineNum, 0, wxALL | wxEXPAND, 5);
+		hbox->Add(new wxButton(this, wxID_OK, wxT("GO")), 0, wxALL | wxEXPAND, 5);
+		SetSizer(hbox);
+	}
+	~AMXGotoLineDlg() { delete this->lineNum; }
+};
+
 class AMXTextEdit : public wxFrame
 {
 	wxMenuBar *mainMenu;
@@ -37,6 +53,8 @@ class AMXTextEdit : public wxFrame
 	AMXPage* NewPage(wxNotebook* book);
 	void AddNewPage();
 	void EnableEditMenus(bool e);
+	void AssignEventHandlers();
+	void CreateMenus();
 	int DoFind(wxString needle, int flags);
 	bool DoReplace(wxString str, wxString rep, int flags, bool replaceAll);
 
@@ -63,8 +81,6 @@ public:
 };
 
 const int ID_MENU_SELECTFONT = 101;
-
-const int ID_BTN_BASE = 200;
-
+const int ID_MENU_GOTOLINE = 102;
 
 #endif

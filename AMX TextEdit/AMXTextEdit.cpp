@@ -13,8 +13,21 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	SetIcon(wxIcon(wxT("MAIN_ICON")));
 	lastFindPos = -1;
 
+	CreateMenus();
+
+	mainBook = new wxNotebook(this, -1, wxDefaultPosition, wxDefaultSize, wxNB_TOP);
+
+	AssignEventHandlers();
+
+	Centre();
+
+	AddNewPage();
+}
+
+void AMXTextEdit::CreateMenus()
+{
 	mainMenu = new wxMenuBar;
-	
+
 	wxMenu* fileMenu = new wxMenu;
 	fileMenu->Append(new wxMenuItem(fileMenu, wxID_NEW, wxT("&New\tCtrl+N"), wxT("Create a new text document")));
 	fileMenu->Append(new wxMenuItem(fileMenu, wxID_OPEN, wxT("&Open\tCtrl+O"), wxT("Open an existing text document")));
@@ -32,6 +45,8 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	editMenu->Append(new wxMenuItem(editMenu, -1, wxEmptyString, wxEmptyString, wxITEM_SEPARATOR));
 	editMenu->Append(new wxMenuItem(editMenu, wxID_FIND, wxT("Find\tCtrl+F"), wxT("Find something")));
 	editMenu->Append(new wxMenuItem(editMenu, wxID_REPLACE, wxT("Replace\tCtrl+H"), wxT("Replace something")));
+	editMenu->Append(new wxMenuItem(editMenu, -1, wxEmptyString, wxEmptyString, wxITEM_SEPARATOR));
+	editMenu->Append(new wxMenuItem(editMenu, ID_MENU_GOTOLINE, wxT("Go to line\tCtrl+G"), wxT("Go to a specific line number")));
 	mainMenu->Append(editMenu, wxT("&Edit"));
 
 	wxMenu* fontMenu = new wxMenu;
@@ -43,12 +58,14 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	mainMenu->Append(helpMenu, wxT("&Help"));
 
 	SetMenuBar(mainMenu);
+
 	CreateStatusBar();
 
 	EnableEditMenus(false);
+}
 
-	mainBook = new wxNotebook(this, -1, wxDefaultPosition, wxDefaultSize, wxNB_TOP);
-
+void AMXTextEdit::AssignEventHandlers()
+{
 	Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(AMXTextEdit::OnClose));
 
 	Connect(wxID_ABOUT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::About));
@@ -63,6 +80,7 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	Connect(wxID_PASTE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_FIND, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_REPLACE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
+	Connect(ID_MENU_GOTOLINE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(ID_MENU_SELECTFONT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Font));
 
 	Connect(wxEVT_FIND, wxFindDialogEventHandler(AMXTextEdit::OnFind));
@@ -70,10 +88,6 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	Connect(wxEVT_FIND_REPLACE, wxFindDialogEventHandler(AMXTextEdit::OnReplace));
 	Connect(wxEVT_FIND_REPLACE_ALL, wxFindDialogEventHandler(AMXTextEdit::OnReplaceAll));
 	Connect(wxEVT_FIND_CLOSE, wxFindDialogEventHandler(AMXTextEdit::OnFindClose));
-
-	Centre();
-
-	AddNewPage();
 }
 
 int AMXTextEdit::DoFind(wxString needle, int flags)
@@ -413,6 +427,30 @@ void AMXTextEdit::Edit(wxCommandEvent& event)
 		}
 		break;
 
+	case ID_MENU_GOTOLINE:
+		AMXGotoLineDlg* dlg = new AMXGotoLineDlg(this);
+		if (dlg->ShowModal() == wxID_OK)
+		{
+			long line = -1;
+			dlg->lineNum->GetValue().ToLong(&line);
+			
+			if (line == -1)
+			{
+				wxMessageBox(wxT("Please enter a valid line number!"));
+				return;
+			}
+
+			if (line > page->txtBody->GetNumberOfLines())
+			{
+				wxMessageBox(wxString::Format("There are no more than %d lines in the current document!", page->txtBody->GetNumberOfLines()));
+				return;
+			}
+
+			page->txtBody->GotoLine(line - 1);
+		}
+		dlg->Destroy();
+		delete dlg;
+		break;
 	}
 }
 
