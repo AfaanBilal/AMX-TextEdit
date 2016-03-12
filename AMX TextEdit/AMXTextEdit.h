@@ -71,16 +71,24 @@ public:
 	void Open(wxCommandEvent& event);
 	void Save(wxCommandEvent& event);
 	void Edit(wxCommandEvent& event);
-	void Font(wxCommandEvent& event);
+	void Options(wxCommandEvent& event);
 	void SetName(wxCommandEvent& event);
 
 	void OnFind(wxFindDialogEvent& event);
 	void OnReplace(wxFindDialogEvent& event);
 	void OnReplaceAll(wxFindDialogEvent& event);
 	void OnFindClose(wxFindDialogEvent& event);
+
+	void OnContextMenu(wxContextMenuEvent& event);
+
+	void Redraw();
 };
 
 const int ID_MENU_SELECTFONT = 101;
 const int ID_MENU_GOTOLINE = 102;
+const int ID_POPUPMENU_CLOSE = 103;
+
+const int ID_MENU_TABSTOP = 201;
+const int ID_MENU_TABSBOTTOM = 202;
 
 #endif

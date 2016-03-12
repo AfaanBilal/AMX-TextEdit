@@ -38,7 +38,10 @@ void AMXTextEdit::CreateMenus()
 	mainMenu->Append(fileMenu, wxT("&File"));
 
 	wxMenu* editMenu = new wxMenu;
-	editMenu->Append(new wxMenuItem(editMenu, wxID_SELECTALL, wxT("Select All"), wxT("Select all text")));
+	editMenu->Append(new wxMenuItem(editMenu, wxID_UNDO, wxT("Undo\tCtrl+Z"), wxT("Undo last action")));
+	editMenu->Append(new wxMenuItem(editMenu, wxID_REDO, wxT("Redo\tCtrl+Y"), wxT("Revert last undo")));
+	editMenu->Append(new wxMenuItem(editMenu, -1, wxEmptyString, wxEmptyString, wxITEM_SEPARATOR));
+	editMenu->Append(new wxMenuItem(editMenu, wxID_SELECTALL, wxT("Select All\tCtrl+A"), wxT("Select all text")));
 	editMenu->Append(new wxMenuItem(editMenu, wxID_COPY, wxT("Copy\tCtrl+C"), wxT("Copy selected text")));
 	editMenu->Append(new wxMenuItem(editMenu, wxID_CUT, wxT("Cut\tCtrl+X"), wxT("Cut selected text")));
 	editMenu->Append(new wxMenuItem(editMenu, wxID_PASTE, wxT("Paste\tCtrl+V"), wxT("Paste copied text")));
@@ -49,9 +52,18 @@ void AMXTextEdit::CreateMenus()
 	editMenu->Append(new wxMenuItem(editMenu, ID_MENU_GOTOLINE, wxT("Go to line\tCtrl+G"), wxT("Go to a specific line number")));
 	mainMenu->Append(editMenu, wxT("&Edit"));
 
-	wxMenu* fontMenu = new wxMenu;
-	fontMenu->Append(new wxMenuItem(fontMenu, ID_MENU_SELECTFONT, wxT("Choose font"), wxT("Select a font")));
-	mainMenu->Append(fontMenu, wxT("&Font"));
+	wxMenu* optionsMenu = new wxMenu;
+	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_SELECTFONT, wxT("Choose font"), wxT("Select a font")));
+
+	wxMenuItem* menuTabPos = new wxMenuItem(optionsMenu, -1, wxT("Tabs position"));
+	
+	wxMenu* menuTabPosOps = new wxMenu;
+	menuTabPosOps->Append(new wxMenuItem(menuTabPosOps, ID_MENU_TABSTOP, wxT("Top"), wxT("Set tabs on top"), wxITEM_RADIO));
+	menuTabPosOps->Append(new wxMenuItem(menuTabPosOps, ID_MENU_TABSBOTTOM, wxT("Bottom"), wxT("Set tabs on bottom"), wxITEM_RADIO));
+	menuTabPos->SetSubMenu(menuTabPosOps);
+
+	optionsMenu->Append(menuTabPos);
+	mainMenu->Append(optionsMenu, wxT("&Options"));
 
 	wxMenu* helpMenu = new wxMenu;
 	helpMenu->Append(new wxMenuItem(helpMenu, wxID_ABOUT, wxT("&About"), wxT("About AMX TextEdit")));
@@ -74,6 +86,8 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(wxID_OPEN, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Open));
 	Connect(wxID_SAVE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Save));
 	Connect(wxID_SAVEAS, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Save));
+	Connect(wxID_UNDO, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
+	Connect(wxID_REDO, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_SELECTALL, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_COPY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_CUT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
@@ -81,13 +95,27 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(wxID_FIND, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_REPLACE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(ID_MENU_GOTOLINE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
-	Connect(ID_MENU_SELECTFONT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Font));
+	Connect(ID_MENU_SELECTFONT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
+	Connect(ID_MENU_TABSTOP, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
+	Connect(ID_MENU_TABSBOTTOM, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 
 	Connect(wxEVT_FIND, wxFindDialogEventHandler(AMXTextEdit::OnFind));
 	Connect(wxEVT_FIND_NEXT, wxFindDialogEventHandler(AMXTextEdit::OnFind));
 	Connect(wxEVT_FIND_REPLACE, wxFindDialogEventHandler(AMXTextEdit::OnReplace));
 	Connect(wxEVT_FIND_REPLACE_ALL, wxFindDialogEventHandler(AMXTextEdit::OnReplaceAll));
 	Connect(wxEVT_FIND_CLOSE, wxFindDialogEventHandler(AMXTextEdit::OnFindClose));
+
+	Connect(wxEVT_CONTEXT_MENU, wxContextMenuEventHandler(AMXTextEdit::OnContextMenu));
+}
+
+void AMXTextEdit::OnContextMenu(wxContextMenuEvent& event)
+{
+	wxMenu popupMenu;
+	popupMenu.Append(ID_POPUPMENU_CLOSE, wxT("Close tab"));
+
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	//wxMessageBox(wxT("Context"));
 }
 
 int AMXTextEdit::DoFind(wxString needle, int flags)
@@ -192,6 +220,8 @@ void AMXTextEdit::EnableEditMenus(bool e = true)
 {
 	FindItemInMenuBar(wxID_SAVE)->Enable(e);
 	FindItemInMenuBar(wxID_SAVEAS)->Enable(e);
+	FindItemInMenuBar(wxID_UNDO)->Enable(e);
+	FindItemInMenuBar(wxID_REDO)->Enable(e);
 	FindItemInMenuBar(wxID_SELECTALL)->Enable(e);
 	FindItemInMenuBar(wxID_COPY)->Enable(e);
 	FindItemInMenuBar(wxID_CUT)->Enable(e);
@@ -249,7 +279,7 @@ void AMXTextEdit::OnClose(wxCloseEvent& event)
 
 void AMXTextEdit::About(wxCommandEvent& event)
 {
-	wxMessageBox(wxT("AMX TextEdit\nA simple, tabbed text editor.\n\n(c) Afaan Bilal\n\nwww.coderevolution.tk\ngoogle.com/+AfaanBilal"), wxT("About AMX TextEdit"), wxICON_INFORMATION);
+	wxMessageBox(wxT("AMX TextEdit\nA simple, fast, tabbed text editor.\n\n(c) Afaan Bilal\n\nwww.coderevolution.tk\ngoogle.com/+AfaanBilal"), wxT("About AMX TextEdit"), wxICON_INFORMATION);
 }
 
 void AMXTextEdit::Exit(wxCommandEvent& event)
@@ -360,6 +390,20 @@ void AMXTextEdit::Edit(wxCommandEvent& event)
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
 	switch (event.GetId())
 	{
+	case wxID_UNDO:
+		if (page->txtBody->CanUndo())
+		{
+			page->txtBody->Undo();
+		}
+		break;
+		
+	case wxID_REDO:
+		if (page->txtBody->CanRedo())
+		{
+			page->txtBody->Redo();
+		}
+		break;
+
 	case wxID_SELECTALL:
 		page->txtBody->SelectAll();
 		break;
@@ -451,10 +495,11 @@ void AMXTextEdit::Edit(wxCommandEvent& event)
 		dlg->Destroy();
 		delete dlg;
 		break;
+	
 	}
 }
 
-void AMXTextEdit::Font(wxCommandEvent& event)
+void AMXTextEdit::Options(wxCommandEvent& event)
 {
 	if (mainBook->GetPageCount() < 1)
 	{
@@ -477,6 +522,35 @@ void AMXTextEdit::Font(wxCommandEvent& event)
 
 							   delete fontDialog;
 	}
+		break;
+
+	case ID_MENU_TABSTOP:
+		mainBook->SetWindowStyle(wxNB_TOP);
+		Redraw();
+		break;
+
+	case ID_MENU_TABSBOTTOM:
+		mainBook->SetWindowStyle(wxNB_BOTTOM);
+		Redraw();
+		break;
+
 	}
 }
+
+void AMXTextEdit::Redraw()
+{
+	if (this->IsMaximized())
+	{
+		this->Restore();
+		this->Maximize();
+		return;
+	}
+
+	int w, h;
+	GetSize(&w, &h);
+	this->SetSize(w - 1, h - 1);
+	GetSize(&w, &h);
+	this->SetSize(w + 1, h + 1);
+}
+
 
