@@ -55,8 +55,13 @@ class AMXTextEdit : public wxFrame
 	void EnableEditMenus(bool e);
 	void AssignEventHandlers();
 	void CreateMenus();
+	
 	int DoFind(wxString needle, int flags);
 	bool DoReplace(wxString str, wxString rep, int flags, bool replaceAll);
+
+	void CloseCurrentPage();
+
+	void Redraw();
 
 public:
 	AMXTextEdit(const wxString& title);
@@ -80,8 +85,7 @@ public:
 	void OnFindClose(wxFindDialogEvent& event);
 
 	void OnContextMenu(wxContextMenuEvent& event);
-
-	void Redraw();
+	
 };
 
 const int ID_MENU_SELECTFONT = 101;

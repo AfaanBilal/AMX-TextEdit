@@ -95,6 +95,7 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(wxID_FIND, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_REPLACE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(ID_MENU_GOTOLINE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
+	Connect(ID_POPUPMENU_CLOSE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(ID_MENU_SELECTFONT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_TABSTOP, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_TABSBOTTOM, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
@@ -111,11 +112,11 @@ void AMXTextEdit::AssignEventHandlers()
 void AMXTextEdit::OnContextMenu(wxContextMenuEvent& event)
 {
 	wxMenu popupMenu;
-	popupMenu.Append(ID_POPUPMENU_CLOSE, wxT("Close tab"));
+	popupMenu.Append(ID_POPUPMENU_CLOSE, wxT("Close current tab"));
 
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
 
-	//wxMessageBox(wxT("Context"));
+	PopupMenu(&popupMenu);
 }
 
 int AMXTextEdit::DoFind(wxString needle, int flags)
@@ -472,28 +473,43 @@ void AMXTextEdit::Edit(wxCommandEvent& event)
 		break;
 
 	case ID_MENU_GOTOLINE:
-		AMXGotoLineDlg* dlg = new AMXGotoLineDlg(this);
-		if (dlg->ShowModal() == wxID_OK)
-		{
-			long line = -1;
-			dlg->lineNum->GetValue().ToLong(&line);
-			
-			if (line == -1)
-			{
-				wxMessageBox(wxT("Please enter a valid line number!"));
-				return;
-			}
+	{
+							 AMXGotoLineDlg* dlg = new AMXGotoLineDlg(this);
+							 if (dlg->ShowModal() == wxID_OK)
+							 {
+								 long line = -1;
+								 dlg->lineNum->GetValue().ToLong(&line);
 
-			if (line > page->txtBody->GetNumberOfLines())
-			{
-				wxMessageBox(wxString::Format("There are no more than %d lines in the current document!", page->txtBody->GetNumberOfLines()));
-				return;
-			}
+								 if (line == -1)
+								 {
+									 wxMessageBox(wxT("Please enter a valid line number!"));
+									 return;
+								 }
 
-			page->txtBody->GotoLine(line - 1);
-		}
-		dlg->Destroy();
-		delete dlg;
+								 if (line > page->txtBody->GetNumberOfLines())
+								 {
+									 wxMessageBox(wxString::Format("There are no more than %d lines in the current document!", page->txtBody->GetNumberOfLines()));
+									 return;
+								 }
+
+								 page->txtBody->GotoLine(line - 1);
+							 }
+							 dlg->Destroy();
+							 delete dlg;
+	}
+		break;
+
+	case ID_POPUPMENU_CLOSE:
+	{
+							   wxMessageDialog dial(NULL, wxT("Are you sure?"), wxT("AMX TextEdit"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
+
+							   int ret = dial.ShowModal();
+
+							   if (ret == wxID_YES)
+							   {
+								   CloseCurrentPage();
+							   }
+	}
 		break;
 	
 	}
@@ -552,5 +568,18 @@ void AMXTextEdit::Redraw()
 	GetSize(&w, &h);
 	this->SetSize(w + 1, h + 1);
 }
+
+void AMXTextEdit::CloseCurrentPage()
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	mainBook->DeletePage(page->id);
+	
+	if (mainBook->GetPageCount() < 1)
+	{
+		AddNewPage();
+	}
+}
+
 
 
