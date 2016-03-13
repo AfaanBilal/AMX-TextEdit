@@ -4,7 +4,7 @@ AMX TextEdit
 Author: **Afaan Bilal ([@AfaanBilal](https://github.com/AfaanBilal))**   
 Author URL: **[Google+](https://google.com/+AfaanBilal)**
 
-##### Download: [Executable, V0.0.2.33](https://afaan.ml/downloads/AMX-TextEdit-0.0.2.33-Executable.zip)
+##### Download: [Executable, V0.0.3.01](https://afaan.ml/downloads/AMX-TextEdit-0.0.3.01-Executable.zip)
 
 ## Introduction
 **AMX TextEdit** is a simple, fast, tabbed text editor written in C++. A lightweight replacement for your notepad with tabs!
