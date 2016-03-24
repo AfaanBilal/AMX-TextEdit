@@ -72,11 +72,16 @@ void AMXTextEdit::CreateMenus()
 	helpMenu->Append(new wxMenuItem(helpMenu, wxID_ABOUT, wxT("&About"), wxT("About AMX TextEdit")));
 	mainMenu->Append(helpMenu, wxT("&Help"));
 
+	wxMenu* ccppMenu = new wxMenu;
+	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_COMPILE_RUN, wxT("Compile and Run"), wxT("Compile and execute the C/C++ file")));
+	mainMenu->Append(ccppMenu, wxT("C/C++"));
+
 	SetMenuBar(mainMenu);
 
 	CreateStatusBar();
 
 	EnableEditMenus(false);
+	FindItemInMenuBar(ID_MENU_COMPILE_RUN)->Enable(false);
 }
 
 void AMXTextEdit::AssignEventHandlers()
@@ -108,6 +113,8 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(ID_MENU_ENABLECPP, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_ENABLECF, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 
+	Connect(ID_MENU_COMPILE_RUN, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::CCPP));
+
 	Connect(wxEVT_FIND, wxFindDialogEventHandler(AMXTextEdit::OnFind));
 	Connect(wxEVT_FIND_NEXT, wxFindDialogEventHandler(AMXTextEdit::OnFind));
 	Connect(wxEVT_FIND_REPLACE, wxFindDialogEventHandler(AMXTextEdit::OnReplace));
@@ -116,6 +123,36 @@ void AMXTextEdit::AssignEventHandlers()
 
 	Connect(wxEVT_CONTEXT_MENU, wxContextMenuEventHandler(AMXTextEdit::OnContextMenu));
 	Connect(wxEVT_STC_MARGINCLICK, wxStyledTextEventHandler(AMXTextEdit::OnMarginClick));
+}
+
+void AMXTextEdit::CCPP(wxCommandEvent& event)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	switch (event.GetId())
+	{
+	case ID_MENU_COMPILE_RUN:
+		if (page->ccpp)
+		{
+			SaveFile(page);
+
+			wxString compiler = (page->filename.EndsWith(".c") || page->filename.EndsWith(".C")) ? wxT("gcc") : wxT("g++");
+			
+			wxString cmd = wxString::Format("pause | %s -o \"%s.exe\" \"%s\" | echo Press any key to continue...", compiler, page->filename.BeforeLast('.'), page->filename);
+			int ret = wxSystem(cmd);
+			wxMessageBox(wxString::Format("%d", ret));
+			return;
+			if (ret == 0)
+			{
+				wxSystem(wxString::Format("%s.exe", page->filename.BeforeLast('.')));
+			}
+		}
+		else
+		{
+			wxMessageBox(wxT("The current file is not saved as a C/C++ source file!"), wxT("AMX TextEdit"));
+		}
+		break;
+	}
 }
 
 void AMXTextEdit::OnContextMenu(wxContextMenuEvent& event)
@@ -250,6 +287,8 @@ AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
 
 	page->id = currentID;
 	page->filename = wxEmptyString;
+	page->saved = false;
+	page->ccpp = false;
 
 	wxBoxSizer* vSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -418,15 +457,7 @@ void AMXTextEdit::Open(wxCommandEvent& event)
 		AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());		
 		page->filename = openFileDialog->GetPath();
 		
-		if (page->filename.EndsWith(wxT(".c")) ||
-			page->filename.EndsWith(wxT(".C")) ||
-			page->filename.EndsWith(wxT(".cpp")) ||
-			page->filename.EndsWith(wxT(".CPP"))
-			)
-		{
-			EnableCPPSyntaxHighlighting(true);
-			EnableCodeFolding(true);
-		}
+		EnableCPPMode(true);
 
 		wxTextFile file(page->filename);
 
@@ -496,15 +527,7 @@ void AMXTextEdit::Save(wxCommandEvent& event)
 							//	page->filename += ".txt";
 							//}
 
-							if (page->filename.EndsWith(wxT(".c")) ||
-								page->filename.EndsWith(wxT(".C")) ||
-								page->filename.EndsWith(wxT(".cpp")) ||
-								page->filename.EndsWith(wxT(".CPP"))
-								)
-							{
-								EnableCPPSyntaxHighlighting(true);
-								EnableCodeFolding(true);
-							}
+							EnableCPPMode(true);
 
 							SaveFile(page);
 						}
@@ -713,6 +736,25 @@ void AMXTextEdit::Redraw()
 	this->SetSize(w + 1, h + 1);
 }
 
+void AMXTextEdit::EnableCPPMode(bool e = true)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	if (page->filename.EndsWith(wxT(".c")) ||
+		page->filename.EndsWith(wxT(".C")) ||
+		page->filename.EndsWith(wxT(".cpp")) ||
+		page->filename.EndsWith(wxT(".CPP"))
+		)
+	{
+		EnableCPPSyntaxHighlighting(e);
+		EnableCodeFolding(e);
+		FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(e);
+		FindItemInMenuBar(ID_MENU_ENABLECF)->Check(e);
+		page->ccpp = e;
+		FindItemInMenuBar(ID_MENU_COMPILE_RUN)->Enable(e);
+	}
+}
+
 void AMXTextEdit::CloseCurrentPage()
 {
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
@@ -724,6 +766,3 @@ void AMXTextEdit::CloseCurrentPage()
 		AddNewPage();
 	}
 }
-
-
-

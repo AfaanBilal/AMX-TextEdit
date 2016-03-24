@@ -15,6 +15,7 @@
 #include <wx/fontdlg.h>
 #include <wx/stc/stc.h>
 #include <wx/fdrepdlg.h>
+#include <wx/process.h>
 
 #include "AMXPage.h"
 #include "AMXGotoLineDlg.h"
@@ -61,6 +62,7 @@ public:
 	void Save(wxCommandEvent& event);
 	void Edit(wxCommandEvent& event);
 	void Options(wxCommandEvent& event);
+	void CCPP(wxCommandEvent& event);
 	void SetName(wxCommandEvent& event);
 
 	void OnFind(wxFindDialogEvent& event);
@@ -73,6 +75,7 @@ public:
 
 	void EnableCPPSyntaxHighlighting(bool e);
 	void EnableCodeFolding(bool e);
+	void EnableCPPMode(bool e);
 	
 };
 
@@ -84,6 +87,8 @@ const int ID_MENU_TABSTOP = 201;
 const int ID_MENU_TABSBOTTOM = 202;
 const int ID_MENU_ENABLECPP = 203;
 const int ID_MENU_ENABLECF = 204;
+
+const int ID_MENU_COMPILE_RUN = 301;
 
 #endif
 

@@ -18,6 +18,7 @@ public:
 	~AMXPage() { delete this->txtBody; }
 	int id;
 	bool saved;
+	bool ccpp;
 	wxString filename;
 	wxStyledTextCtrl* txtBody;
 };
