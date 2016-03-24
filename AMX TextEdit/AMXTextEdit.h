@@ -19,6 +19,12 @@
 #include "AMXGotoLineDlg.h"
 #include "AMXAboutDlg.h"
 
+enum
+{
+	MARGIN_LINE_NUMBERS,
+	MARGIN_FOLD
+};
+
 class AMXTextEdit : public wxFrame
 {
 	wxMenuBar *mainMenu;
@@ -62,6 +68,10 @@ public:
 	void OnFindClose(wxFindDialogEvent& event);
 
 	void OnContextMenu(wxContextMenuEvent& event);
+	void OnMarginClick(wxStyledTextEvent& event);
+
+	void EnableCPPSyntaxHighlighting(bool e);
+	void EnableCodeFolding(bool e);
 	
 };
 
@@ -71,6 +81,8 @@ const int ID_POPUPMENU_CLOSE = 103;
 
 const int ID_MENU_TABSTOP = 201;
 const int ID_MENU_TABSBOTTOM = 202;
+const int ID_MENU_ENABLECPP = 203;
+const int ID_MENU_ENABLECF = 204;
 
 #endif
 

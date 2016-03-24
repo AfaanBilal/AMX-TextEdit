@@ -8,7 +8,7 @@
 #include "AMXTextEdit.h"
 
 AMXTextEdit::AMXTextEdit(const wxString& title)
-: wxFrame(NULL, -1, title, wxPoint(-1, -1), wxSize(580, 640))
+: wxFrame(NULL, -1, title, wxPoint(-1, -1), wxSize(640, 600))
 {
 	SetIcon(wxIcon(wxT("MAIN_ICON")));
 	lastFindPos = -1;
@@ -63,6 +63,8 @@ void AMXTextEdit::CreateMenus()
 	menuTabPos->SetSubMenu(menuTabPosOps);
 
 	optionsMenu->Append(menuTabPos);
+	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECPP, wxT("Enable C/C++ Syntax Highlighting"), wxT("Enable syntax highlighting for C/C++"), wxITEM_CHECK));
+	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECF, wxT("Enable Code Folding"), wxT("Enable code folding"), wxITEM_CHECK));
 	mainMenu->Append(optionsMenu, wxT("&Options"));
 
 	wxMenu* helpMenu = new wxMenu;
@@ -84,8 +86,10 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Exit));
 	Connect(wxID_NEW, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::New));
 	Connect(wxID_OPEN, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Open));
+	
 	Connect(wxID_SAVE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Save));
 	Connect(wxID_SAVEAS, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Save));
+
 	Connect(wxID_UNDO, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_REDO, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(wxID_SELECTALL, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
@@ -96,9 +100,12 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(wxID_REPLACE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(ID_MENU_GOTOLINE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
 	Connect(ID_POPUPMENU_CLOSE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Edit));
+
 	Connect(ID_MENU_SELECTFONT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_TABSTOP, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_TABSBOTTOM, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
+	Connect(ID_MENU_ENABLECPP, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
+	Connect(ID_MENU_ENABLECF, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 
 	Connect(wxEVT_FIND, wxFindDialogEventHandler(AMXTextEdit::OnFind));
 	Connect(wxEVT_FIND_NEXT, wxFindDialogEventHandler(AMXTextEdit::OnFind));
@@ -107,6 +114,7 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(wxEVT_FIND_CLOSE, wxFindDialogEventHandler(AMXTextEdit::OnFindClose));
 
 	Connect(wxEVT_CONTEXT_MENU, wxContextMenuEventHandler(AMXTextEdit::OnContextMenu));
+	Connect(wxEVT_STC_MARGINCLICK, wxStyledTextEventHandler(AMXTextEdit::OnMarginClick));
 }
 
 void AMXTextEdit::OnContextMenu(wxContextMenuEvent& event)
@@ -245,15 +253,122 @@ AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
 	wxBoxSizer* vSizer = new wxBoxSizer(wxVERTICAL);
 
 	page->txtBody = new wxStyledTextCtrl(page, -1, wxDefaultPosition, wxDefaultSize, wxSTC_STYLE_LINENUMBER);
-	page->txtBody->SetMarginType(0, wxSTC_MARGIN_NUMBER);
-	page->txtBody->SetMarginWidth(0, 25);
+	
+	page->txtBody->SetMarginWidth(MARGIN_LINE_NUMBERS, 30);
 	page->txtBody->StyleSetForeground(wxSTC_STYLE_LINENUMBER, wxColour(75, 75, 75));
 	page->txtBody->StyleSetBackground(wxSTC_STYLE_LINENUMBER, wxColour(220, 220, 220));
-		
+	page->txtBody->SetMarginType(MARGIN_LINE_NUMBERS, wxSTC_MARGIN_NUMBER);
+	
 	vSizer->Add(page->txtBody, 1, wxALL | wxEXPAND, 5);
 	page->SetSizer(vSizer);
 	
 	return page;
+}
+
+void AMXTextEdit::EnableCPPSyntaxHighlighting(bool e = true)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	if (e)
+	{
+		page->txtBody->SetLexer(wxSTC_LEX_CPP);
+		page->txtBody->StyleSetForeground(wxSTC_C_STRING, wxColour(150, 0, 0));
+		page->txtBody->StyleSetForeground(wxSTC_C_PREPROCESSOR, wxColour(165, 105, 0));
+		page->txtBody->StyleSetForeground(wxSTC_C_IDENTIFIER, wxColour(40, 0, 60));
+		page->txtBody->StyleSetForeground(wxSTC_C_NUMBER, wxColour(150, 0, 0));
+		page->txtBody->StyleSetForeground(wxSTC_C_CHARACTER, wxColour(150, 0, 0));
+		page->txtBody->StyleSetForeground(wxSTC_C_WORD, wxColour(0, 0, 150));
+		page->txtBody->StyleSetForeground(wxSTC_C_WORD2, wxColour(0, 150, 0));
+		page->txtBody->StyleSetForeground(wxSTC_C_COMMENT, wxColour(150, 150, 150));
+		page->txtBody->StyleSetForeground(wxSTC_C_COMMENTLINE, wxColour(150, 150, 150));
+		page->txtBody->StyleSetForeground(wxSTC_C_COMMENTDOC, wxColour(150, 150, 150));
+		page->txtBody->StyleSetForeground(wxSTC_C_COMMENTDOCKEYWORD, wxColour(0, 0, 200));
+		page->txtBody->StyleSetForeground(wxSTC_C_COMMENTDOCKEYWORDERROR, wxColour(0, 0, 200));
+		page->txtBody->StyleSetBold(wxSTC_C_WORD, true);
+		page->txtBody->StyleSetBold(wxSTC_C_WORD2, true);
+		page->txtBody->StyleSetBold(wxSTC_C_COMMENTDOCKEYWORD, true);
+
+		page->txtBody->SetKeyWords(0, wxT("auto break case char const continue default do double else enum extern float \
+										   for goto if int long register return short signed sizeof static struct switch  \
+										   typedef union unsigned void volatile while \
+										   asm bool catch class const_cast delete dynamic_cast explicit false friend inline \
+										   mutable namespace new operator private public protected reinterpret_cast static_cast \
+										   template this throw true try typeid typename using virtual wchar_t \
+										   and and_eq bitand bitor compl not not_eq or or_eq xor xor_eq"));
+		page->txtBody->SetKeyWords(1, wxT("cin cout endl include INT_MIN INT_MAX iomanip iostream main MAX_RAND npos NULL std string"));
+	}
+	else
+	{
+		page->txtBody->StyleClearAll();
+	}
+}
+
+void AMXTextEdit::EnableCodeFolding(bool e = true)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	if (e)
+	{
+		page->txtBody->SetMarginType(MARGIN_FOLD, wxSTC_MARGIN_SYMBOL);
+		page->txtBody->SetMarginWidth(MARGIN_FOLD, 15);
+		page->txtBody->SetMarginMask(MARGIN_FOLD, wxSTC_MASK_FOLDERS);
+		page->txtBody->StyleSetBackground(MARGIN_FOLD, wxColor(200, 200, 200));
+		page->txtBody->SetMarginSensitive(MARGIN_FOLD, true);
+
+		// Properties found from http://www.scintilla.org/SciTEDoc.html
+		page->txtBody->SetProperty(wxT("fold"), wxT("1"));
+		page->txtBody->SetProperty(wxT("fold.comment"), wxT("1"));
+		page->txtBody->SetProperty(wxT("fold.compact"), wxT("1"));
+
+		wxColor grey(100, 100, 100);
+		page->txtBody->MarkerDefine(wxSTC_MARKNUM_FOLDER, wxSTC_MARK_ARROW);
+		page->txtBody->MarkerSetForeground(wxSTC_MARKNUM_FOLDER, grey);
+		page->txtBody->MarkerSetBackground(wxSTC_MARKNUM_FOLDER, grey);
+
+		page->txtBody->MarkerDefine(wxSTC_MARKNUM_FOLDEROPEN, wxSTC_MARK_ARROWDOWN);
+		page->txtBody->MarkerSetForeground(wxSTC_MARKNUM_FOLDEROPEN, grey);
+		page->txtBody->MarkerSetBackground(wxSTC_MARKNUM_FOLDEROPEN, grey);
+
+		page->txtBody->MarkerDefine(wxSTC_MARKNUM_FOLDERSUB, wxSTC_MARK_EMPTY);
+		page->txtBody->MarkerSetForeground(wxSTC_MARKNUM_FOLDERSUB, grey);
+		page->txtBody->MarkerSetBackground(wxSTC_MARKNUM_FOLDERSUB, grey);
+
+		page->txtBody->MarkerDefine(wxSTC_MARKNUM_FOLDEREND, wxSTC_MARK_ARROW);
+		page->txtBody->MarkerSetForeground(wxSTC_MARKNUM_FOLDEREND, grey);
+		page->txtBody->MarkerSetBackground(wxSTC_MARKNUM_FOLDEREND, _T("WHITE"));
+
+		page->txtBody->MarkerDefine(wxSTC_MARKNUM_FOLDEROPENMID, wxSTC_MARK_ARROWDOWN);
+		page->txtBody->MarkerSetForeground(wxSTC_MARKNUM_FOLDEROPENMID, grey);
+		page->txtBody->MarkerSetBackground(wxSTC_MARKNUM_FOLDEROPENMID, _T("WHITE"));
+
+		page->txtBody->MarkerDefine(wxSTC_MARKNUM_FOLDERMIDTAIL, wxSTC_MARK_EMPTY);
+		page->txtBody->MarkerSetForeground(wxSTC_MARKNUM_FOLDERMIDTAIL, grey);
+		page->txtBody->MarkerSetBackground(wxSTC_MARKNUM_FOLDERMIDTAIL, grey);
+
+		page->txtBody->MarkerDefine(wxSTC_MARKNUM_FOLDERTAIL, wxSTC_MARK_EMPTY);
+		page->txtBody->MarkerSetForeground(wxSTC_MARKNUM_FOLDERTAIL, grey);
+		page->txtBody->MarkerSetBackground(wxSTC_MARKNUM_FOLDERTAIL, grey);
+	}
+	else
+	{
+		page->txtBody->SetMarginWidth(MARGIN_FOLD, 0);
+	}
+}
+
+void AMXTextEdit::OnMarginClick(wxStyledTextEvent& event)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	if (event.GetMargin() == MARGIN_FOLD)
+	{
+		int lineClick = page->txtBody->LineFromPosition(event.GetPosition());
+		int levelClick = page->txtBody->GetFoldLevel(lineClick);
+
+		if ((levelClick & wxSTC_FOLDLEVELHEADERFLAG) > 0)
+		{
+			page->txtBody->ToggleFold(lineClick);
+		}
+	}
 }
 
 void AMXTextEdit::AddNewPage()
@@ -280,7 +395,6 @@ void AMXTextEdit::OnClose(wxCloseEvent& event)
 
 void AMXTextEdit::About(wxCommandEvent& event)
 {
-	//wxMessageBox(wxT("AMX TextEdit\nA simple, fast, tabbed text editor.\n\n(c) Afaan Bilal\n\nwww.coderevolution.tk\ngoogle.com/+AfaanBilal"), wxT("About AMX TextEdit"), wxICON_INFORMATION);
 	(new AMXAboutDlg(this))->Show(true);
 }
 
@@ -549,6 +663,14 @@ void AMXTextEdit::Options(wxCommandEvent& event)
 	case ID_MENU_TABSBOTTOM:
 		mainBook->SetWindowStyle(wxNB_BOTTOM);
 		Redraw();
+		break;
+
+	case ID_MENU_ENABLECPP:
+		EnableCPPSyntaxHighlighting(FindItemInMenuBar(ID_MENU_ENABLECPP)->IsChecked());
+		break;
+
+	case ID_MENU_ENABLECF:
+		EnableCodeFolding(FindItemInMenuBar(ID_MENU_ENABLECF)->IsChecked());
 		break;
 
 	}
