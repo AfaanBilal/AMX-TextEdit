@@ -1,6 +1,7 @@
 /*
  *    AMX TextEdit
  *    Author: Afaan Bilal
+ *    https://afaan.ml/AMX-TextEdit
  *    https://www.coderevolution.tk
  *
  */
@@ -63,8 +64,8 @@ void AMXTextEdit::CreateMenus()
 	menuTabPos->SetSubMenu(menuTabPosOps);
 
 	optionsMenu->Append(menuTabPos);
-	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECPP, wxT("Enable C/C++ Syntax Highlighting"), wxT("Enable syntax highlighting for C/C++"), wxITEM_CHECK));
-	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECF, wxT("Enable Code Folding"), wxT("Enable code folding"), wxITEM_CHECK));
+	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECPP, wxT("C/C++ Syntax Highlighting"), wxT("Toggle syntax highlighting for C/C++"), wxITEM_CHECK));
+	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECF, wxT("Code Folding"), wxT("Toggle code folding"), wxITEM_CHECK));
 	mainMenu->Append(optionsMenu, wxT("&Options"));
 
 	wxMenu* helpMenu = new wxMenu;
@@ -410,7 +411,7 @@ void AMXTextEdit::New(wxCommandEvent& event)
 
 void AMXTextEdit::Open(wxCommandEvent& event)
 {
-	wxFileDialog * openFileDialog = new wxFileDialog(this, _("Open a text file"), "", "", "Text Files (*.*)|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	wxFileDialog * openFileDialog = new wxFileDialog(this, _("Open a file"), "", "", "All Files (*.*)|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (openFileDialog->ShowModal() == wxID_OK){
 		AddNewPage();
@@ -476,14 +477,14 @@ void AMXTextEdit::Save(wxCommandEvent& event)
 
 	case wxID_SAVEAS:
 	{
-						wxFileDialog * saveFileDialog = new wxFileDialog(this, _("Save the text file"), "", "", "Text files (*.*)|*.*", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+						wxFileDialog * saveFileDialog = new wxFileDialog(this, _("Save the file"), "", "", "All files (*.*)|*.*", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 						if (saveFileDialog->ShowModal() == wxID_OK)
 						{
 							page->filename = saveFileDialog->GetPath();
-							if (!page->filename.EndsWith(wxT(".txt")) && !page->filename.EndsWith(wxT(".TXT")))
-							{
-								page->filename += ".txt";
-							}
+							//if (!page->filename.EndsWith(wxT(".txt")) && !page->filename.EndsWith(wxT(".TXT")))
+							//{
+							//	page->filename += ".txt";
+							//}
 
 							SaveFile(page);
 						}

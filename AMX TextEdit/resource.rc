@@ -1,6 +1,7 @@
 /*
 *    AMX TextEdit
 *    Author: Afaan Bilal
+*    https://afaan.ml/AMX-TextEdit
 *    https://www.coderevolution.tk
 *
 */
@@ -10,8 +11,8 @@
 MAIN_ICON ICON MOVEABLE PURE LOADONCALL DISCARDABLE "AMXTextEdit.ico"
 
 1 VERSIONINFO
-FILEVERSION 0, 0, 3, 01
-PRODUCTVERSION 0, 0, 3, 01
+FILEVERSION 0, 0, 4, 26
+PRODUCTVERSION 0, 0, 4, 26
 FILETYPE VFT_APP
 BEGIN
 	BLOCK "StringFileInfo"
@@ -20,7 +21,7 @@ BEGIN
 		BEGIN
 			VALUE "CompanyName", "AMX Infinity!"
 			VALUE "FileVersion", ""
-			VALUE "FileDescription", "A simple, fast, tabbed text editor."
+			VALUE "FileDescription", "A simple, fast, tabbed text editor by Afaan Bilal"
 			VALUE "InternalName", "AMXTextEdit"
 			VALUE "LegalCopyright", "© Afaan Bilal"
 			VALUE "LegalTrademarks", "AMX Infinity!"

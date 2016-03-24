@@ -1,6 +1,7 @@
 /*
 *    AMX TextEdit
 *    Author: Afaan Bilal
+*    https://afaan.ml/AMX-TextEdit
 *    https://www.coderevolution.tk
 *
 */
