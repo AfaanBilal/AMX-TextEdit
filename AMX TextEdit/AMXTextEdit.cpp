@@ -486,6 +486,16 @@ void AMXTextEdit::Save(wxCommandEvent& event)
 							//	page->filename += ".txt";
 							//}
 
+							if (page->filename.EndsWith(wxT(".c")) ||
+								page->filename.EndsWith(wxT(".C")) ||
+								page->filename.EndsWith(wxT(".cpp")) ||
+								page->filename.EndsWith(wxT(".CPP"))
+								)
+							{
+								EnableCPPSyntaxHighlighting(true);
+								EnableCodeFolding(true);
+							}
+
 							SaveFile(page);
 						}
 						delete saveFileDialog;
