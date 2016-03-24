@@ -418,6 +418,16 @@ void AMXTextEdit::Open(wxCommandEvent& event)
 		AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());		
 		page->filename = openFileDialog->GetPath();
 		
+		if (page->filename.EndsWith(wxT(".c")) ||
+			page->filename.EndsWith(wxT(".C")) ||
+			page->filename.EndsWith(wxT(".cpp")) ||
+			page->filename.EndsWith(wxT(".CPP"))
+			)
+		{
+			EnableCPPSyntaxHighlighting(true);
+			EnableCodeFolding(true);
+		}
+
 		wxTextFile file(page->filename);
 
 		file.Open();
