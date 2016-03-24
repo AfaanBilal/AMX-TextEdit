@@ -29,6 +29,15 @@
     <ClInclude Include="AMXTextEdit.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="AMXPage.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AMXGotoLineDlg.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AMXAboutDlg.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">

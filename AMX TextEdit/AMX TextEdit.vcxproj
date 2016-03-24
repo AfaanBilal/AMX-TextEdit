@@ -72,6 +72,9 @@
     <ClCompile Include="AMXTextEdit.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AMXAboutDlg.h" />
+    <ClInclude Include="AMXGotoLineDlg.h" />
+    <ClInclude Include="AMXPage.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="AMXTextEdit.h" />
   </ItemGroup>

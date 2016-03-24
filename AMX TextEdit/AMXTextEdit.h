@@ -15,32 +15,9 @@
 #include <wx/stc/stc.h>
 #include <wx/fdrepdlg.h>
 
-class AMXPage : public wxWindow
-{
-public:
-	AMXPage(wxWindow* parent, wxWindowID id) : wxWindow(parent, id) { }
-	~AMXPage() { delete this->txtBody; }
-	int id;
-	bool saved;
-	wxString filename;
-	wxStyledTextCtrl* txtBody;
-};
-
-class AMXGotoLineDlg : public wxDialog
-{
-public:
-	wxTextCtrl* lineNum;
-	AMXGotoLineDlg(wxWindow* parent) : wxDialog(parent, -1, "AMX TextEdit - Go to Line", wxDefaultPosition, wxSize(280, 70)) 
-	{
-		wxBoxSizer* hbox = new wxBoxSizer(wxHORIZONTAL);
-		hbox->Add(new wxStaticText(this, -1, wxT("Line number: ")), 0, wxALL | wxEXPAND, 5);
-		this->lineNum = new wxTextCtrl(this, -1, wxT(""));
-		hbox->Add(this->lineNum, 0, wxALL | wxEXPAND, 5);
-		hbox->Add(new wxButton(this, wxID_OK, wxT("GO")), 0, wxALL | wxEXPAND, 5);
-		SetSizer(hbox);
-	}
-	~AMXGotoLineDlg() { delete this->lineNum; }
-};
+#include "AMXPage.h"
+#include "AMXGotoLineDlg.h"
+#include "AMXAboutDlg.h"
 
 class AMXTextEdit : public wxFrame
 {
@@ -96,3 +73,4 @@ const int ID_MENU_TABSTOP = 201;
 const int ID_MENU_TABSBOTTOM = 202;
 
 #endif
+

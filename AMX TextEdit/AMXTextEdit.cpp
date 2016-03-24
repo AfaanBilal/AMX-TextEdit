@@ -280,7 +280,8 @@ void AMXTextEdit::OnClose(wxCloseEvent& event)
 
 void AMXTextEdit::About(wxCommandEvent& event)
 {
-	wxMessageBox(wxT("AMX TextEdit\nA simple, fast, tabbed text editor.\n\n(c) Afaan Bilal\n\nwww.coderevolution.tk\ngoogle.com/+AfaanBilal"), wxT("About AMX TextEdit"), wxICON_INFORMATION);
+	//wxMessageBox(wxT("AMX TextEdit\nA simple, fast, tabbed text editor.\n\n(c) Afaan Bilal\n\nwww.coderevolution.tk\ngoogle.com/+AfaanBilal"), wxT("About AMX TextEdit"), wxICON_INFORMATION);
+	(new AMXAboutDlg(this))->Show(true);
 }
 
 void AMXTextEdit::Exit(wxCommandEvent& event)
