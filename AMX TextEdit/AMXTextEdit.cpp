@@ -131,9 +131,31 @@ void AMXTextEdit::AssignEventHandlers()
 
 void AMXTextEdit::CompileCCPP(wxString filename)
 {
+	wxProcess* proc = new wxProcess(wxPROCESS_REDIRECT);
+	proc->Redirect();
+	
 	wxString compiler = (filename.EndsWith(".c") || filename.EndsWith(".C")) ? wxT("gcc") : wxT("g++");
-	wxString cmd = wxString::Format("pause | %s -o \"%s.exe\" \"%s\" | echo Press any key to continue...", compiler, filename.BeforeLast('.'), filename);
-	wxSystem(cmd);	
+	wxString cmd = wxString::Format("%s -o \"%s.exe\" \"%s\"", compiler, filename.BeforeLast('.'), filename);
+	
+	wxArrayString output, errors;
+	
+	wxExecute(cmd, output, errors);
+	
+	wxString errorS = wxEmptyString;
+
+	if (errors.GetCount() > 0)
+	{
+		for (size_t i = 0; i < errors.GetCount(); i++)
+		{
+			errorS += wxString::Format("\n%s", errors[i]);
+		}
+
+		wxMessageBox(wxT("Errors:\n") + errorS, wxT("AMX TextEdit"));
+	}
+	else
+	{
+		GetStatusBar()->SetStatusText(wxT("Compilation successful!"));
+	}
 }
 
 void AMXTextEdit::RunCCPP(wxString filename)

@@ -16,6 +16,7 @@
 #include <wx/stc/stc.h>
 #include <wx/fdrepdlg.h>
 #include <wx/process.h>
+#include <wx/utils.h>
 
 #include "AMXPage.h"
 #include "AMXGotoLineDlg.h"
