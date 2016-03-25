@@ -37,7 +37,16 @@ class AMXTextEdit : public wxFrame
 
 	AMXPage* NewPage(wxNotebook* book);
 	void AddNewPage();
+
 	void EnableEditMenus(bool e);
+	void EnableCCPPMenus(bool e);
+	void EnableCPPSyntaxHighlighting(bool e);
+	void EnableCodeFolding(bool e);
+	void EnableCPPMode(bool e);
+
+	void CompileCCPP(wxString filename);
+	void RunCCPP(wxString filename);
+
 	void AssignEventHandlers();
 	void CreateMenus();
 	
@@ -72,11 +81,6 @@ public:
 
 	void OnContextMenu(wxContextMenuEvent& event);
 	void OnMarginClick(wxStyledTextEvent& event);
-
-	void EnableCPPSyntaxHighlighting(bool e);
-	void EnableCodeFolding(bool e);
-	void EnableCPPMode(bool e);
-	
 };
 
 const int ID_MENU_SELECTFONT = 101;
@@ -89,6 +93,8 @@ const int ID_MENU_ENABLECPP = 203;
 const int ID_MENU_ENABLECF = 204;
 
 const int ID_MENU_COMPILE_RUN = 301;
+const int ID_MENU_COMPILE = 302;
+const int ID_MENU_RUN = 303;
 
 #endif
 

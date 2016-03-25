@@ -74,6 +74,8 @@ void AMXTextEdit::CreateMenus()
 
 	wxMenu* ccppMenu = new wxMenu;
 	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_COMPILE_RUN, wxT("Compile and Run"), wxT("Compile and execute the C/C++ file")));
+	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_COMPILE, wxT("Compile"), wxT("Compile the C/C++ file")));
+	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_RUN, wxT("Run"), wxT("Execute the C/C++ file")));
 	mainMenu->Append(ccppMenu, wxT("C/C++"));
 
 	SetMenuBar(mainMenu);
@@ -81,7 +83,7 @@ void AMXTextEdit::CreateMenus()
 	CreateStatusBar();
 
 	EnableEditMenus(false);
-	FindItemInMenuBar(ID_MENU_COMPILE_RUN)->Enable(false);
+	EnableCCPPMenus(false);
 }
 
 void AMXTextEdit::AssignEventHandlers()
@@ -114,6 +116,8 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(ID_MENU_ENABLECF, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 
 	Connect(ID_MENU_COMPILE_RUN, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::CCPP));
+	Connect(ID_MENU_COMPILE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::CCPP));
+	Connect(ID_MENU_RUN, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::CCPP));
 
 	Connect(wxEVT_FIND, wxFindDialogEventHandler(AMXTextEdit::OnFind));
 	Connect(wxEVT_FIND_NEXT, wxFindDialogEventHandler(AMXTextEdit::OnFind));
@@ -125,33 +129,47 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(wxEVT_STC_MARGINCLICK, wxStyledTextEventHandler(AMXTextEdit::OnMarginClick));
 }
 
+void AMXTextEdit::CompileCCPP(wxString filename)
+{
+	wxString compiler = (filename.EndsWith(".c") || filename.EndsWith(".C")) ? wxT("gcc") : wxT("g++");
+	wxString cmd = wxString::Format("pause | %s -o \"%s.exe\" \"%s\" | echo Press any key to continue...", compiler, filename.BeforeLast('.'), filename);
+	wxSystem(cmd);	
+}
+
+void AMXTextEdit::RunCCPP(wxString filename)
+{
+	if (wxFile::Exists(filename.BeforeLast('.') + wxT(".exe")))
+	{
+		wxSystem(wxString::Format("%s.exe", filename.BeforeLast('.')));
+	}
+}
+
 void AMXTextEdit::CCPP(wxCommandEvent& event)
 {
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+	
+	if (!page->ccpp)
+	{
+		wxMessageBox(wxT("The current file is not saved as a C/C++ source file!"), wxT("AMX TextEdit"));
+		return;
+	}
+
+	SaveFile(page);
 
 	switch (event.GetId())
 	{
 	case ID_MENU_COMPILE_RUN:
-		if (page->ccpp)
-		{
-			SaveFile(page);
-
-			wxString compiler = (page->filename.EndsWith(".c") || page->filename.EndsWith(".C")) ? wxT("gcc") : wxT("g++");
-			
-			wxString cmd = wxString::Format("pause | %s -o \"%s.exe\" \"%s\" | echo Press any key to continue...", compiler, page->filename.BeforeLast('.'), page->filename);
-			int ret = wxSystem(cmd);
-			wxMessageBox(wxString::Format("%d", ret));
-			return;
-			if (ret == 0)
-			{
-				wxSystem(wxString::Format("%s.exe", page->filename.BeforeLast('.')));
-			}
-		}
-		else
-		{
-			wxMessageBox(wxT("The current file is not saved as a C/C++ source file!"), wxT("AMX TextEdit"));
-		}
+		CompileCCPP(page->filename);
+		RunCCPP(page->filename);
 		break;
+
+	case ID_MENU_COMPILE:
+		CompileCCPP(page->filename);
+		break;
+
+	case ID_MENU_RUN:
+		RunCCPP(page->filename);
+		break;		
 	}
 }
 
@@ -275,6 +293,13 @@ void AMXTextEdit::EnableEditMenus(bool e = true)
 	FindItemInMenuBar(wxID_PASTE)->Enable(e);
 	FindItemInMenuBar(ID_MENU_SELECTFONT)->Enable(e);
 	FindItemInMenuBar(wxID_FIND)->Enable(e);
+}
+
+void AMXTextEdit::EnableCCPPMenus(bool e = true)
+{
+	FindItemInMenuBar(ID_MENU_COMPILE_RUN)->Enable(e);
+	FindItemInMenuBar(ID_MENU_COMPILE)->Enable(e);
+	FindItemInMenuBar(ID_MENU_RUN)->Enable(e);
 }
 
 AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
@@ -751,7 +776,7 @@ void AMXTextEdit::EnableCPPMode(bool e = true)
 		FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(e);
 		FindItemInMenuBar(ID_MENU_ENABLECF)->Check(e);
 		page->ccpp = e;
-		FindItemInMenuBar(ID_MENU_COMPILE_RUN)->Enable(e);
+		EnableCCPPMenus(true);
 	}
 }
 
