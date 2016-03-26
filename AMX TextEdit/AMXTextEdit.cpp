@@ -131,9 +131,6 @@ void AMXTextEdit::AssignEventHandlers()
 
 void AMXTextEdit::CompileCCPP(wxString filename)
 {
-	wxProcess* proc = new wxProcess(wxPROCESS_REDIRECT);
-	proc->Redirect();
-	
 	wxString compiler = (filename.EndsWith(".c") || filename.EndsWith(".C")) ? wxT("gcc") : wxT("g++");
 	wxString cmd = wxString::Format("%s -o \"%s.exe\" \"%s\"", compiler, filename.BeforeLast('.'), filename);
 	
