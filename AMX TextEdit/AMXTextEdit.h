@@ -46,7 +46,7 @@ class AMXTextEdit : public wxFrame
 	void EnableCodeFolding(bool e);
 	void EnableCPPMode(bool e);
 
-	void CompileCCPP(wxString filename);
+	bool CompileCCPP(wxString filename);
 	void RunCCPP(wxString filename);
 
 	void AssignEventHandlers();
@@ -64,7 +64,8 @@ public:
 	~AMXTextEdit() { };
 
 	void OnClose(wxCloseEvent& event);
-	
+	void PageChanged(wxBookCtrlEvent& event);
+
 	void SaveFile(AMXPage* page);
 	void Exit(wxCommandEvent& event);
 	void About(wxCommandEvent& event);

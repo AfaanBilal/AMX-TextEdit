@@ -19,6 +19,8 @@ public:
 	int id;
 	bool saved;
 	bool ccpp;
+	bool ccppSyntaxHighlighting;
+	bool codeFolding;
 	wxString filename;
 	wxStyledTextCtrl* txtBody;
 };

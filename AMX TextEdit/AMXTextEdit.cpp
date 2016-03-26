@@ -89,6 +89,7 @@ void AMXTextEdit::CreateMenus()
 void AMXTextEdit::AssignEventHandlers()
 {
 	Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(AMXTextEdit::OnClose));
+	Connect(wxEVT_NOTEBOOK_PAGE_CHANGED, wxBookCtrlEventHandler(AMXTextEdit::PageChanged));
 
 	Connect(wxID_ABOUT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::About));
 	Connect(wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Exit));
@@ -129,7 +130,16 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(wxEVT_STC_MARGINCLICK, wxStyledTextEventHandler(AMXTextEdit::OnMarginClick));
 }
 
-void AMXTextEdit::CompileCCPP(wxString filename)
+void AMXTextEdit::PageChanged(wxBookCtrlEvent& event)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	EnableCCPPMenus(page->ccpp);
+	FindItemInMenuBar(ID_MENU_ENABLECF)->Check(page->codeFolding);
+	FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(page->ccppSyntaxHighlighting);
+}
+
+bool AMXTextEdit::CompileCCPP(wxString filename)
 {
 	wxString compiler = (filename.EndsWith(".c") || filename.EndsWith(".C")) ? wxT("gcc") : wxT("g++");
 	wxString cmd = wxString::Format("%s -o \"%s.exe\" \"%s\"", compiler, filename.BeforeLast('.'), filename);
@@ -158,10 +168,12 @@ void AMXTextEdit::CompileCCPP(wxString filename)
 		wxPoint dlgPos = wxPoint(curPos.x + 10, curPos.y + curSize.GetHeight() - 180);
 		errorDlg = new AMXCCPPErrorDlg(this, errors, dlgPos, curSize.GetWidth() - 20);
 		errorDlg->Show();
+		return false;
 	}
 	else
 	{
 		GetStatusBar()->SetStatusText(wxT("Compilation successful!"));
+		return true;
 	}
 }
 
@@ -198,8 +210,10 @@ void AMXTextEdit::CCPP(wxCommandEvent& event)
 	switch (event.GetId())
 	{
 	case ID_MENU_COMPILE_RUN:
-		CompileCCPP(page->filename);
-		RunCCPP(page->filename);
+		if (CompileCCPP(page->filename))
+		{
+			RunCCPP(page->filename);
+		}
 		break;
 
 	case ID_MENU_COMPILE:
@@ -353,6 +367,8 @@ AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
 	page->filename = wxEmptyString;
 	page->saved = false;
 	page->ccpp = false;
+	page->ccppSyntaxHighlighting = false;
+	page->codeFolding = false;
 
 	wxBoxSizer* vSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -373,6 +389,7 @@ void AMXTextEdit::EnableCPPSyntaxHighlighting(bool e = true)
 {
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
 
+	page->ccppSyntaxHighlighting = e;
 	if (e)
 	{
 		page->txtBody->SetLexer(wxSTC_LEX_CPP);
@@ -411,6 +428,7 @@ void AMXTextEdit::EnableCodeFolding(bool e = true)
 {
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
 
+	page->codeFolding = e;
 	if (e)
 	{
 		page->txtBody->SetMarginType(MARGIN_FOLD, wxSTC_MARGIN_SYMBOL);
@@ -815,7 +833,7 @@ void AMXTextEdit::EnableCPPMode(bool e = true)
 		FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(e);
 		FindItemInMenuBar(ID_MENU_ENABLECF)->Check(e);
 		page->ccpp = e;
-		EnableCCPPMenus(true);
+		EnableCCPPMenus(e);
 	}
 }
 
