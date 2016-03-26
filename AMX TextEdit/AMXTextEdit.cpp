@@ -130,15 +130,6 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(wxEVT_STC_MARGINCLICK, wxStyledTextEventHandler(AMXTextEdit::OnMarginClick));
 }
 
-void AMXTextEdit::PageChanged(wxBookCtrlEvent& event)
-{
-	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
-
-	EnableCCPPMenus(page->ccpp);
-	FindItemInMenuBar(ID_MENU_ENABLECF)->Check(page->codeFolding);
-	FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(page->ccppSyntaxHighlighting);
-}
-
 bool AMXTextEdit::CompileCCPP(wxString filename)
 {
 	wxString compiler = (filename.EndsWith(".c") || filename.EndsWith(".C")) ? wxT("gcc") : wxT("g++");
@@ -187,53 +178,6 @@ void AMXTextEdit::RunCCPP(wxString filename)
 	{
 		wxMessageBox(wxT("The file is not compiled!"), wxT("AMX TextEdit"));
 	}
-}
-
-void AMXTextEdit::CCPP(wxCommandEvent& event)
-{
-	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
-	
-	if (!page->ccpp)
-	{
-		wxMessageBox(wxT("The current file is not saved as a C/C++ source file!"), wxT("AMX TextEdit"));
-		return;
-	}
-
-	if (errorDlg != NULL && errorDlg->IsShown())
-	{
-		errorDlg->Destroy();
-		delete errorDlg;
-	}
-
-	SaveFile(page);
-
-	switch (event.GetId())
-	{
-	case ID_MENU_COMPILE_RUN:
-		if (CompileCCPP(page->filename))
-		{
-			RunCCPP(page->filename);
-		}
-		break;
-
-	case ID_MENU_COMPILE:
-		CompileCCPP(page->filename);
-		break;
-
-	case ID_MENU_RUN:
-		RunCCPP(page->filename);
-		break;		
-	}
-}
-
-void AMXTextEdit::OnContextMenu(wxContextMenuEvent& event)
-{
-	wxMenu popupMenu;
-	popupMenu.Append(ID_POPUPMENU_CLOSE, wxT("Close current tab"));
-
-	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
-
-	PopupMenu(&popupMenu);
 }
 
 int AMXTextEdit::DoFind(wxString needle, int flags)
@@ -295,45 +239,6 @@ bool AMXTextEdit::DoReplace(wxString str, wxString rep, int flags, bool replaceA
 	return true;
 }
 
-void AMXTextEdit::OnFind(wxFindDialogEvent& event)
-{
-	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
-
-	int pos = DoFind(event.GetFindString(), event.GetFlags());
-
-	if (pos == -1)
-	{
-		wxMessageBox(wxT("No more matches!"), wxT("AMX TextEdit - Find")); 
-	}
-}
-
-void AMXTextEdit::OnReplace(wxFindDialogEvent& event)
-{
-	if (!DoReplace(event.GetFindString(), event.GetReplaceString(), event.GetFlags()))
-	{
-		wxMessageBox(wxT("No more matches."));
-	}
-}
-
-void AMXTextEdit::OnReplaceAll(wxFindDialogEvent& event)
-{
-	if (DoReplace(event.GetFindString(), event.GetReplaceString(), event.GetFlags(), true)) 
-	{ 
-		wxMessageBox(wxT("Replacements made.")); 
-	}
-	else 
-	{ 
-		wxMessageBox(wxT("No replacements made."));
-	}
-}
-
-void AMXTextEdit::OnFindClose(wxFindDialogEvent& event)
-{
-	lastFindPos = -1;
-	frDlg->Destroy(); 
-	frDlg = NULL;
-}
-
 void AMXTextEdit::EnableEditMenus(bool e = true)
 {
 	FindItemInMenuBar(wxID_SAVE)->Enable(e);
@@ -353,36 +258,6 @@ void AMXTextEdit::EnableCCPPMenus(bool e = true)
 	FindItemInMenuBar(ID_MENU_COMPILE_RUN)->Enable(e);
 	FindItemInMenuBar(ID_MENU_COMPILE)->Enable(e);
 	FindItemInMenuBar(ID_MENU_RUN)->Enable(e);
-}
-
-AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
-{
-	EnableEditMenus();
-
-	int currentID = book->GetPageCount();
-
-	AMXPage *page = new AMXPage(book, currentID);
-
-	page->id = currentID;
-	page->filename = wxEmptyString;
-	page->saved = false;
-	page->ccpp = false;
-	page->ccppSyntaxHighlighting = false;
-	page->codeFolding = false;
-
-	wxBoxSizer* vSizer = new wxBoxSizer(wxVERTICAL);
-
-	page->txtBody = new wxStyledTextCtrl(page, -1, wxDefaultPosition, wxDefaultSize, wxSTC_STYLE_LINENUMBER);
-	
-	page->txtBody->SetMarginWidth(MARGIN_LINE_NUMBERS, 30);
-	page->txtBody->StyleSetForeground(wxSTC_STYLE_LINENUMBER, wxColour(75, 75, 75));
-	page->txtBody->StyleSetBackground(wxSTC_STYLE_LINENUMBER, wxColour(220, 220, 220));
-	page->txtBody->SetMarginType(MARGIN_LINE_NUMBERS, wxSTC_MARGIN_NUMBER);
-	
-	vSizer->Add(page->txtBody, 1, wxALL | wxEXPAND, 5);
-	page->SetSizer(vSizer);
-	
-	return page;
 }
 
 void AMXTextEdit::EnableCPPSyntaxHighlighting(bool e = true)
@@ -477,6 +352,75 @@ void AMXTextEdit::EnableCodeFolding(bool e = true)
 	}
 }
 
+void AMXTextEdit::AddNewPage()
+{
+	AMXPage *newPage = NewPage(mainBook);
+	mainBook->InsertPage(newPage->id, newPage, "Untitled", true);
+	newPage->txtBody->SetFocus();
+}
+
+void AMXTextEdit::Redraw()
+{
+	if (this->IsMaximized())
+	{
+		this->Restore();
+		this->Maximize();
+		return;
+	}
+
+	int w, h;
+	GetSize(&w, &h);
+	this->SetSize(w - 1, h - 1);
+	GetSize(&w, &h);
+	this->SetSize(w + 1, h + 1);
+}
+
+void AMXTextEdit::EnableCPPMode(bool e = true)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	if (page->filename.EndsWith(wxT(".c")) ||
+		page->filename.EndsWith(wxT(".C")) ||
+		page->filename.EndsWith(wxT(".cpp")) ||
+		page->filename.EndsWith(wxT(".CPP"))
+		)
+	{
+		EnableCPPSyntaxHighlighting(e);
+		EnableCodeFolding(e);
+		FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(e);
+		FindItemInMenuBar(ID_MENU_ENABLECF)->Check(e);
+		page->ccpp = e;
+		EnableCCPPMenus(e);
+	}
+}
+
+void AMXTextEdit::CloseCurrentPage()
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	mainBook->DeletePage(page->id);
+	
+	if (mainBook->GetPageCount() < 1)
+	{
+		AddNewPage();
+	}
+}
+
+void AMXTextEdit::SaveFile(AMXPage* page)
+{
+	wxFile file;
+	file.Create(page->filename, true);
+
+	if (file.IsOpened())
+		file.Write(page->txtBody->GetValue());
+
+	file.Close();
+
+	page->saved = true;
+	mainBook->SetPageText(page->id, page->filename.AfterLast('\\'));
+	GetStatusBar()->SetStatusText(wxT("Save successfull!"));
+}
+
 void AMXTextEdit::OnMarginClick(wxStyledTextEvent& event)
 {
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
@@ -493,17 +437,10 @@ void AMXTextEdit::OnMarginClick(wxStyledTextEvent& event)
 	}
 }
 
-void AMXTextEdit::AddNewPage()
-{
-	AMXPage *newPage = NewPage(mainBook);
-	mainBook->InsertPage(newPage->id, newPage, "Untitled", true);
-	newPage->txtBody->SetFocus();
-}
-
 void AMXTextEdit::OnClose(wxCloseEvent& event)
 {
 	wxMessageDialog *dial = new wxMessageDialog(NULL, wxT("Are you sure to quit?"), wxT("AMX TextEdit"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
-	
+
 	int ret = dial->ShowModal();
 	dial->Destroy();
 
@@ -536,9 +473,9 @@ void AMXTextEdit::Open(wxCommandEvent& event)
 
 	if (openFileDialog->ShowModal() == wxID_OK){
 		AddNewPage();
-		AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());		
+		AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
 		page->filename = openFileDialog->GetPath();
-		
+
 		EnableCPPMode(true);
 
 		wxTextFile file(page->filename);
@@ -546,7 +483,7 @@ void AMXTextEdit::Open(wxCommandEvent& event)
 		file.Open();
 
 		page->txtBody->Clear();
-		
+
 		for (wxString s = file.GetFirstLine(); !file.Eof(); s = file.GetNextLine())
 		{
 			page->txtBody->AppendText(s);
@@ -560,21 +497,6 @@ void AMXTextEdit::Open(wxCommandEvent& event)
 	}
 
 	delete openFileDialog;
-}
-
-void AMXTextEdit::SaveFile(AMXPage* page)
-{
-	wxFile file;
-	file.Create(page->filename, true);
-
-	if (file.IsOpened())
-		file.Write(page->txtBody->GetValue());
-
-	file.Close();
-
-	page->saved = true;
-	mainBook->SetPageText(page->id, page->filename.AfterLast('\\'));
-	GetStatusBar()->SetStatusText(wxT("Save successfull!"));
 }
 
 void AMXTextEdit::Save(wxCommandEvent& event)
@@ -638,7 +560,7 @@ void AMXTextEdit::Edit(wxCommandEvent& event)
 			page->txtBody->Undo();
 		}
 		break;
-		
+
 	case wxID_REDO:
 		if (page->txtBody->CanRedo())
 		{
@@ -674,12 +596,12 @@ void AMXTextEdit::Edit(wxCommandEvent& event)
 	case wxID_FIND:
 		if (!page->txtBody->IsEmpty())
 		{
-			if (frDlg) 
-			{ 
-				delete frDlg; 
-				frDlg = NULL; 
+			if (frDlg)
+			{
+				delete frDlg;
+				frDlg = NULL;
 			}
-			else 
+			else
 			{
 				frData;
 				frDlg = new wxFindReplaceDialog(this, &frData, wxT("AMX TextEdit - Find"));
@@ -752,7 +674,7 @@ void AMXTextEdit::Edit(wxCommandEvent& event)
 							   }
 	}
 		break;
-	
+
 	}
 }
 
@@ -771,7 +693,7 @@ void AMXTextEdit::Options(wxCommandEvent& event)
 	{
 							   wxFontDialog* fontDialog = new wxFontDialog(this);
 
-							   if (fontDialog->ShowModal() == wxID_OK) 
+							   if (fontDialog->ShowModal() == wxID_OK)
 							   {
 								   page->txtBody->StyleSetFont(wxSTC_STYLE_DEFAULT, fontDialog->GetFontData().GetChosenFont());
 								   GetStatusBar()->SetStatusText(wxT("Font loaded"));
@@ -802,49 +724,127 @@ void AMXTextEdit::Options(wxCommandEvent& event)
 	}
 }
 
-void AMXTextEdit::Redraw()
+void AMXTextEdit::CCPP(wxCommandEvent& event)
 {
-	if (this->IsMaximized())
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	if (!page->ccpp)
 	{
-		this->Restore();
-		this->Maximize();
+		wxMessageBox(wxT("The current file is not saved as a C/C++ source file!"), wxT("AMX TextEdit"));
 		return;
 	}
 
-	int w, h;
-	GetSize(&w, &h);
-	this->SetSize(w - 1, h - 1);
-	GetSize(&w, &h);
-	this->SetSize(w + 1, h + 1);
-}
-
-void AMXTextEdit::EnableCPPMode(bool e = true)
-{
-	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
-
-	if (page->filename.EndsWith(wxT(".c")) ||
-		page->filename.EndsWith(wxT(".C")) ||
-		page->filename.EndsWith(wxT(".cpp")) ||
-		page->filename.EndsWith(wxT(".CPP"))
-		)
+	if (errorDlg != NULL && errorDlg->IsShown())
 	{
-		EnableCPPSyntaxHighlighting(e);
-		EnableCodeFolding(e);
-		FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(e);
-		FindItemInMenuBar(ID_MENU_ENABLECF)->Check(e);
-		page->ccpp = e;
-		EnableCCPPMenus(e);
+		errorDlg->Destroy();
+		delete errorDlg;
+	}
+
+	SaveFile(page);
+
+	switch (event.GetId())
+	{
+	case ID_MENU_COMPILE_RUN:
+		if (CompileCCPP(page->filename))
+		{
+			RunCCPP(page->filename);
+		}
+		break;
+
+	case ID_MENU_COMPILE:
+		CompileCCPP(page->filename);
+		break;
+
+	case ID_MENU_RUN:
+		RunCCPP(page->filename);
+		break;
 	}
 }
 
-void AMXTextEdit::CloseCurrentPage()
+void AMXTextEdit::OnFind(wxFindDialogEvent& event)
 {
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
 
-	mainBook->DeletePage(page->id);
-	
-	if (mainBook->GetPageCount() < 1)
+	int pos = DoFind(event.GetFindString(), event.GetFlags());
+
+	if (pos == -1)
 	{
-		AddNewPage();
+		wxMessageBox(wxT("No more matches!"), wxT("AMX TextEdit - Find"));
 	}
+}
+
+void AMXTextEdit::OnReplace(wxFindDialogEvent& event)
+{
+	if (!DoReplace(event.GetFindString(), event.GetReplaceString(), event.GetFlags()))
+	{
+		wxMessageBox(wxT("No more matches."));
+	}
+}
+
+void AMXTextEdit::OnReplaceAll(wxFindDialogEvent& event)
+{
+	if (DoReplace(event.GetFindString(), event.GetReplaceString(), event.GetFlags(), true))
+	{
+		wxMessageBox(wxT("Replacements made."));
+	}
+	else
+	{
+		wxMessageBox(wxT("No replacements made."));
+	}
+}
+
+void AMXTextEdit::OnFindClose(wxFindDialogEvent& event)
+{
+	lastFindPos = -1;
+	frDlg->Destroy();
+	frDlg = NULL;
+}
+
+void AMXTextEdit::OnContextMenu(wxContextMenuEvent& event)
+{
+	wxMenu popupMenu;
+	popupMenu.Append(ID_POPUPMENU_CLOSE, wxT("Close current tab"));
+
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	PopupMenu(&popupMenu);
+}
+
+void AMXTextEdit::PageChanged(wxBookCtrlEvent& event)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	EnableCCPPMenus(page->ccpp);
+	FindItemInMenuBar(ID_MENU_ENABLECF)->Check(page->codeFolding);
+	FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(page->ccppSyntaxHighlighting);
+}
+
+AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
+{
+	EnableEditMenus();
+
+	int currentID = book->GetPageCount();
+
+	AMXPage *page = new AMXPage(book, currentID);
+
+	page->id = currentID;
+	page->filename = wxEmptyString;
+	page->saved = false;
+	page->ccpp = false;
+	page->ccppSyntaxHighlighting = false;
+	page->codeFolding = false;
+
+	wxBoxSizer* vSizer = new wxBoxSizer(wxVERTICAL);
+
+	page->txtBody = new wxStyledTextCtrl(page, -1, wxDefaultPosition, wxDefaultSize, wxSTC_STYLE_LINENUMBER);
+
+	page->txtBody->SetMarginWidth(MARGIN_LINE_NUMBERS, 30);
+	page->txtBody->StyleSetForeground(wxSTC_STYLE_LINENUMBER, wxColour(75, 75, 75));
+	page->txtBody->StyleSetBackground(wxSTC_STYLE_LINENUMBER, wxColour(220, 220, 220));
+	page->txtBody->SetMarginType(MARGIN_LINE_NUMBERS, wxSTC_MARGIN_NUMBER);
+
+	vSizer->Add(page->txtBody, 1, wxALL | wxEXPAND, 5);
+	page->SetSizer(vSizer);
+
+	return page;
 }
