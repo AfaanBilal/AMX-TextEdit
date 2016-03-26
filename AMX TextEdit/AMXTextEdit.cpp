@@ -68,15 +68,15 @@ void AMXTextEdit::CreateMenus()
 	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECF, wxT("Code Folding"), wxT("Toggle code folding"), wxITEM_CHECK));
 	mainMenu->Append(optionsMenu, wxT("&Options"));
 
-	wxMenu* helpMenu = new wxMenu;
-	helpMenu->Append(new wxMenuItem(helpMenu, wxID_ABOUT, wxT("&About"), wxT("About AMX TextEdit")));
-	mainMenu->Append(helpMenu, wxT("&Help"));
-
 	wxMenu* ccppMenu = new wxMenu;
 	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_COMPILE_RUN, wxT("Compile and Run"), wxT("Compile and execute the C/C++ file")));
 	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_COMPILE, wxT("Compile"), wxT("Compile the C/C++ file")));
 	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_RUN, wxT("Run"), wxT("Execute the C/C++ file")));
 	mainMenu->Append(ccppMenu, wxT("C/C++"));
+
+	wxMenu* helpMenu = new wxMenu;
+	helpMenu->Append(new wxMenuItem(helpMenu, wxID_ABOUT, wxT("&About"), wxT("About AMX TextEdit")));
+	mainMenu->Append(helpMenu, wxT("&Help"));
 
 	SetMenuBar(mainMenu);
 
@@ -141,7 +141,18 @@ void AMXTextEdit::CompileCCPP(wxString filename)
 	
 	wxExecute(cmd, output, errors);
 	
+	wxString outputS = wxEmptyString;
 	wxString errorS = wxEmptyString;
+
+	if (output.GetCount() > 0)
+	{
+		for (size_t i = 0; i < output.GetCount(); i++)
+		{
+			outputS += wxString::Format("\n%s", output[i]);
+		}
+
+		wxMessageBox(wxT("Output:\n") + outputS, wxT("AMX TextEdit"));
+	}
 
 	if (errors.GetCount() > 0)
 	{
