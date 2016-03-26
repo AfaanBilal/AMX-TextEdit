@@ -38,6 +38,9 @@
     <ClInclude Include="AMXAboutDlg.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="AMXCCPPErrorDlg.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">

@@ -73,6 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AMXAboutDlg.h" />
+    <ClInclude Include="AMXCCPPErrorDlg.h" />
     <ClInclude Include="AMXGotoLineDlg.h" />
     <ClInclude Include="AMXPage.h" />
     <ClInclude Include="main.h" />

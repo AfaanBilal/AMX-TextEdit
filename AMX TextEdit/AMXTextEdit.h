@@ -21,6 +21,7 @@
 #include "AMXPage.h"
 #include "AMXGotoLineDlg.h"
 #include "AMXAboutDlg.h"
+#include "AMXCCPPErrorDlg.h"
 
 enum
 {
@@ -34,6 +35,7 @@ class AMXTextEdit : public wxFrame
 	wxNotebook *mainBook;
 	wxFindReplaceData frData;
 	wxFindReplaceDialog *frDlg;
+	AMXCCPPErrorDlg *errorDlg;
 	int lastFindPos;
 
 	AMXPage* NewPage(wxNotebook* book);

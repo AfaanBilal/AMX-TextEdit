@@ -156,12 +156,11 @@ void AMXTextEdit::CompileCCPP(wxString filename)
 
 	if (errors.GetCount() > 0)
 	{
-		for (size_t i = 0; i < errors.GetCount(); i++)
-		{
-			errorS += wxString::Format("\n%s", errors[i]);
-		}
-
-		wxMessageBox(wxT("Errors:\n") + errorS, wxT("AMX TextEdit"));
+		wxSize curSize = GetSize();
+		wxPoint curPos = GetPosition();
+		wxPoint dlgPos = wxPoint(curPos.x + 10, curPos.y + curSize.GetHeight() - 180);
+		errorDlg = new AMXCCPPErrorDlg(this, errors, dlgPos, curSize.GetWidth() - 20);
+		errorDlg->Show();
 	}
 	else
 	{
@@ -189,6 +188,12 @@ void AMXTextEdit::CCPP(wxCommandEvent& event)
 	{
 		wxMessageBox(wxT("The current file is not saved as a C/C++ source file!"), wxT("AMX TextEdit"));
 		return;
+	}
+
+	if (errorDlg != NULL && errorDlg->IsShown())
+	{
+		errorDlg->Destroy();
+		delete errorDlg;
 	}
 
 	SaveFile(page);
