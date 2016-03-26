@@ -56,7 +56,6 @@ class AMXTextEdit : public wxFrame
 	bool DoReplace(wxString str, wxString rep, int flags, bool replaceAll);
 
 	void CloseCurrentPage();
-
 	void Redraw();
 
 public:
