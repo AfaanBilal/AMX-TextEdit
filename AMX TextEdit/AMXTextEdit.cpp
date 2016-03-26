@@ -175,6 +175,10 @@ void AMXTextEdit::RunCCPP(wxString filename)
 	{
 		wxSystem(wxString::Format("%s.exe", filename.BeforeLast('.')));
 	}
+	else
+	{
+		wxMessageBox(wxT("The file is not compiled!"), wxT("AMX TextEdit"));
+	}
 }
 
 void AMXTextEdit::CCPP(wxCommandEvent& event)
