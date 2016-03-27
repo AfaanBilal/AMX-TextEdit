@@ -381,7 +381,9 @@ void AMXTextEdit::EnableCPPMode(bool e = true)
 	if (page->filename.EndsWith(wxT(".c")) ||
 		page->filename.EndsWith(wxT(".C")) ||
 		page->filename.EndsWith(wxT(".cpp")) ||
-		page->filename.EndsWith(wxT(".CPP"))
+		page->filename.EndsWith(wxT(".CPP")) ||
+		page->filename.EndsWith(wxT(".h")) ||
+		page->filename.EndsWith(wxT(".H"))
 		)
 	{
 		EnableCPPSyntaxHighlighting(e);
