@@ -371,8 +371,7 @@ void AMXTextEdit::Redraw()
 	int w, h;
 	GetSize(&w, &h);
 	this->SetSize(w - 1, h - 1);
-	GetSize(&w, &h);
-	this->SetSize(w + 1, h + 1);
+	this->SetSize(w, h);
 }
 
 void AMXTextEdit::EnableCPPMode(bool e = true)
