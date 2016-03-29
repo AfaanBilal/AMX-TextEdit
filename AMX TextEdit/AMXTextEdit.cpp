@@ -838,10 +838,9 @@ AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
 	wxBoxSizer* vSizer = new wxBoxSizer(wxVERTICAL);
 
 	page->txtBody = new wxStyledTextCtrl(page, -1, wxDefaultPosition, wxDefaultSize, wxSTC_STYLE_LINENUMBER);
-
+	
+	page->txtBody->StyleClearAll();
 	page->txtBody->SetMarginWidth(MARGIN_LINE_NUMBERS, 30);
-	page->txtBody->StyleSetForeground(wxSTC_STYLE_LINENUMBER, wxColour(75, 75, 75));
-	page->txtBody->StyleSetBackground(wxSTC_STYLE_LINENUMBER, wxColour(220, 220, 220));
 	page->txtBody->SetMarginType(MARGIN_LINE_NUMBERS, wxSTC_MARGIN_NUMBER);
 
 	vSizer->Add(page->txtBody, 1, wxALL | wxEXPAND, 5);
