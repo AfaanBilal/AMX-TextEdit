@@ -137,8 +137,22 @@ bool AMXTextEdit::CompileCCPP(wxString filename)
 	
 	wxArrayString output, errors;
 	
-	wxExecute(cmd, output, errors);
-	
+	wxBeginBusyCursor();
+	{
+		wxBusyInfo info
+			(
+			wxBusyInfoFlags()
+			.Parent(this)
+			.Title("<b>AMX TextEdit</b>")
+			.Text("Compiling, please wait...")
+			.Foreground(*wxWHITE)
+			.Background(wxColour(48,115,182))
+			.Transparency(4 * wxALPHA_OPAQUE / 5)
+			);
+		wxExecute(cmd, output, errors);
+	}
+	wxEndBusyCursor();
+
 	wxString outputS = wxEmptyString;
 	wxString errorS = wxEmptyString;
 
@@ -739,6 +753,7 @@ void AMXTextEdit::CCPP(wxCommandEvent& event)
 	{
 		errorDlg->Destroy();
 		delete errorDlg;
+		errorDlg = NULL;
 	}
 
 	SaveFile(page);
