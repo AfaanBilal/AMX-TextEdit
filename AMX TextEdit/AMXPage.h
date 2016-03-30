@@ -21,6 +21,8 @@ public:
 	bool ccpp;
 	bool ccppSyntaxHighlighting;
 	bool codeFolding;
+	bool autoIndent;
+	bool indentGuides;
 	wxString filename;
 	wxStyledTextCtrl* txtBody;
 };

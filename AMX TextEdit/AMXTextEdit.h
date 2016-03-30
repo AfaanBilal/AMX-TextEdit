@@ -45,6 +45,8 @@ class AMXTextEdit : public wxFrame
 	void EnableCCPPMenus(bool e);
 	void EnableCPPSyntaxHighlighting(bool e);
 	void EnableCodeFolding(bool e);
+	void EnableAutoIndent(bool e);
+	void EnableIndentGuides(bool e);
 	void EnableCPPMode(bool e);
 
 	bool CompileCCPP(wxString filename);
@@ -84,6 +86,7 @@ public:
 
 	void OnContextMenu(wxContextMenuEvent& event);
 	void OnMarginClick(wxStyledTextEvent& event);
+	void OnCharAdded(wxStyledTextEvent& event);
 };
 
 const int ID_MENU_SELECTFONT = 101;
@@ -94,6 +97,8 @@ const int ID_MENU_TABSTOP = 201;
 const int ID_MENU_TABSBOTTOM = 202;
 const int ID_MENU_ENABLECPP = 203;
 const int ID_MENU_ENABLECF = 204;
+const int ID_MENU_ENABLEAI = 205;
+const int ID_MENU_ENABLEIG = 206;
 
 const int ID_MENU_COMPILE_RUN = 301;
 const int ID_MENU_COMPILE = 302;

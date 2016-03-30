@@ -66,6 +66,8 @@ void AMXTextEdit::CreateMenus()
 	optionsMenu->Append(menuTabPos);
 	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECPP, wxT("C/C++ Syntax Highlighting"), wxT("Toggle syntax highlighting for C/C++"), wxITEM_CHECK));
 	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECF, wxT("Code Folding"), wxT("Toggle code folding"), wxITEM_CHECK));
+	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLEAI, wxT("Auto Indent"), wxT("Toggle auto-indentation"), wxITEM_CHECK));
+	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLEIG, wxT("Indent Guides"), wxT("Toggle indentation guides"), wxITEM_CHECK));
 	mainMenu->Append(optionsMenu, wxT("&Options"));
 
 	wxMenu* ccppMenu = new wxMenu;
@@ -115,6 +117,8 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(ID_MENU_TABSBOTTOM, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_ENABLECPP, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_ENABLECF, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
+	Connect(ID_MENU_ENABLEAI, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
+	Connect(ID_MENU_ENABLEIG, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 
 	Connect(ID_MENU_COMPILE_RUN, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::CCPP));
 	Connect(ID_MENU_COMPILE, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::CCPP));
@@ -366,6 +370,29 @@ void AMXTextEdit::EnableCodeFolding(bool e = true)
 	}
 }
 
+void AMXTextEdit::EnableAutoIndent(bool e = true)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	page->autoIndent = e;
+	if (e)
+	{
+		Connect(wxEVT_STC_CHARADDED, wxStyledTextEventHandler(AMXTextEdit::OnCharAdded));
+	}
+	else
+	{
+		Disconnect(wxEVT_STC_CHARADDED, wxStyledTextEventHandler(AMXTextEdit::OnCharAdded));
+	}
+}
+
+void AMXTextEdit::EnableIndentGuides(bool e = true)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	page->indentGuides = e;
+	page->txtBody->SetIndentationGuides(e);
+}
+
 void AMXTextEdit::AddNewPage()
 {
 	AMXPage *newPage = NewPage(mainBook);
@@ -406,6 +433,7 @@ void AMXTextEdit::EnableCPPMode(bool e = true)
 		FindItemInMenuBar(ID_MENU_ENABLECF)->Check(e);
 		page->ccpp = e;
 		EnableCCPPMenus(e);
+		EnableAutoIndent(e);
 	}
 }
 
@@ -449,6 +477,39 @@ void AMXTextEdit::OnMarginClick(wxStyledTextEvent& event)
 		{
 			page->txtBody->ToggleFold(lineClick);
 		}
+	}
+}
+
+void AMXTextEdit::OnCharAdded(wxStyledTextEvent &event) 
+{	
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+	
+	char chr = (char)event.GetKey();
+	int currentLine = page->txtBody->GetCurrentLine();
+	
+	if (chr == '\n' || chr == '\r' || chr == '}') 
+	{
+		int lineInd = 0;
+		
+		if (currentLine > 0) 
+		{
+			lineInd = page->txtBody->GetLineIndentation(currentLine - 1);
+		}
+
+		if (page->txtBody->GetLine(currentLine - 1).Contains("{") && !page->txtBody->GetLine(currentLine - 1).Contains("}"))
+		{
+			lineInd += page->txtBody->GetIndent();
+		}
+
+		if (chr == '}')
+		{
+			lineInd -= page->txtBody->GetIndent();
+		}
+
+		if (lineInd < 0) lineInd = 0;
+
+		page->txtBody->SetLineIndentation(currentLine, lineInd);
+		page->txtBody->GotoPos(page->txtBody->PositionFromLine(currentLine) + lineInd + (lineInd == 0 ? 1 : 0));
 	}
 }
 
@@ -736,6 +797,14 @@ void AMXTextEdit::Options(wxCommandEvent& event)
 		EnableCodeFolding(FindItemInMenuBar(ID_MENU_ENABLECF)->IsChecked());
 		break;
 
+	case ID_MENU_ENABLEAI:
+		EnableAutoIndent(FindItemInMenuBar(ID_MENU_ENABLEAI)->IsChecked());
+		break;
+
+	case ID_MENU_ENABLEIG:
+		EnableIndentGuides(FindItemInMenuBar(ID_MENU_ENABLEIG)->IsChecked());
+		break;
+
 	}
 }
 
@@ -833,6 +902,8 @@ void AMXTextEdit::PageChanged(wxBookCtrlEvent& event)
 	EnableCCPPMenus(page->ccpp);
 	FindItemInMenuBar(ID_MENU_ENABLECF)->Check(page->codeFolding);
 	FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(page->ccppSyntaxHighlighting);
+	FindItemInMenuBar(ID_MENU_ENABLEAI)->Check(page->autoIndent);
+	FindItemInMenuBar(ID_MENU_ENABLEIG)->Check(page->indentGuides);
 }
 
 AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
@@ -849,14 +920,18 @@ AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
 	page->ccpp = false;
 	page->ccppSyntaxHighlighting = false;
 	page->codeFolding = false;
+	page->autoIndent = false;
+	page->indentGuides = false;
 
 	wxBoxSizer* vSizer = new wxBoxSizer(wxVERTICAL);
 
 	page->txtBody = new wxStyledTextCtrl(page, -1, wxDefaultPosition, wxDefaultSize, wxSTC_STYLE_LINENUMBER);
-	
 	page->txtBody->StyleClearAll();
 	page->txtBody->SetMarginWidth(MARGIN_LINE_NUMBERS, 30);
 	page->txtBody->SetMarginType(MARGIN_LINE_NUMBERS, wxSTC_MARGIN_NUMBER);
+	page->txtBody->StyleSetForeground(wxSTC_STYLE_INDENTGUIDE, wxColour(*wxBLACK));
+	page->txtBody->StyleSetBackground(wxSTC_STYLE_INDENTGUIDE, wxColour(*wxWHITE));
+	page->txtBody->SetIndent(8);
 
 	vSizer->Add(page->txtBody, 1, wxALL | wxEXPAND, 5);
 	page->SetSizer(vSizer);
