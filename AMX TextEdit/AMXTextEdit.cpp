@@ -782,6 +782,11 @@ void AMXTextEdit::Options(wxCommandEvent& event)
 									   EnableCPPSyntaxHighlighting(false);
 									   EnableCPPSyntaxHighlighting(true);
 								   }
+								   else
+								   {
+									   EnableCPPSyntaxHighlighting(true);
+									   EnableCPPSyntaxHighlighting(false);
+								   }
 								   
 								   GetStatusBar()->SetStatusText(wxT("Font loaded"));
 							   }
