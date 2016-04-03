@@ -87,6 +87,7 @@ public:
 	void OnContextMenu(wxContextMenuEvent& event);
 	void OnMarginClick(wxStyledTextEvent& event);
 	void OnCharAdded(wxStyledTextEvent& event);
+	void OnChange(wxStyledTextEvent& event);
 };
 
 const int ID_MENU_SELECTFONT = 101;

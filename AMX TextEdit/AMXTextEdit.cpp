@@ -132,6 +132,7 @@ void AMXTextEdit::AssignEventHandlers()
 
 	Connect(wxEVT_CONTEXT_MENU, wxContextMenuEventHandler(AMXTextEdit::OnContextMenu));
 	Connect(wxEVT_STC_MARGINCLICK, wxStyledTextEventHandler(AMXTextEdit::OnMarginClick));
+	Connect(wxEVT_STC_CHANGE, wxStyledTextEventHandler(AMXTextEdit::OnChange));
 }
 
 bool AMXTextEdit::CompileCCPP(wxString filename)
@@ -444,7 +445,7 @@ void AMXTextEdit::EnableCPPMode(bool e = true)
 void AMXTextEdit::CloseCurrentPage()
 {
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
-
+	
 	mainBook->DeletePage(page->id);
 	
 	if (mainBook->GetPageCount() < 1)
@@ -484,7 +485,7 @@ void AMXTextEdit::OnMarginClick(wxStyledTextEvent& event)
 	}
 }
 
-void AMXTextEdit::OnCharAdded(wxStyledTextEvent &event) 
+void AMXTextEdit::OnCharAdded(wxStyledTextEvent& event) 
 {	
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
 	
@@ -517,6 +518,13 @@ void AMXTextEdit::OnCharAdded(wxStyledTextEvent &event)
 	}
 }
 
+void AMXTextEdit::OnChange(wxStyledTextEvent& event)
+{
+	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
+
+	page->saved = false;
+}
+
 void AMXTextEdit::OnClose(wxCloseEvent& event)
 {
 	wxMessageDialog *dial = new wxMessageDialog(NULL, wxT("Are you sure to quit?"), wxT("AMX TextEdit"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
@@ -524,10 +532,12 @@ void AMXTextEdit::OnClose(wxCloseEvent& event)
 	int ret = dial->ShowModal();
 	dial->Destroy();
 
-	if (ret == wxID_YES) {
+	if (ret == wxID_YES) 
+	{
 		Destroy();
 	}
-	else {
+	else 
+	{
 		event.Veto();
 	}
 }
@@ -551,7 +561,8 @@ void AMXTextEdit::Open(wxCommandEvent& event)
 {
 	wxFileDialog * openFileDialog = new wxFileDialog(this, _("Open a file"), "", "", "All Files (*.*)|*.*", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
-	if (openFileDialog->ShowModal() == wxID_OK){
+	if (openFileDialog->ShowModal() == wxID_OK)
+	{
 		AddNewPage();
 		AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
 		page->filename = openFileDialog->GetPath();
@@ -571,7 +582,7 @@ void AMXTextEdit::Open(wxCommandEvent& event)
 		}
 
 		file.Close();
-
+		
 		mainBook->SetPageText(page->id, page->filename.AfterLast('\\'));
 		GetStatusBar()->SetStatusText(wxT("Load successfull!"));
 	}
@@ -744,14 +755,20 @@ void AMXTextEdit::Edit(wxCommandEvent& event)
 
 	case ID_POPUPMENU_CLOSE:
 	{
-							   wxMessageDialog dial(NULL, wxT("Are you sure?"), wxT("AMX TextEdit"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
-
-							   int ret = dial.ShowModal();
-
-							   if (ret == wxID_YES)
+							   if (!page->saved)
 							   {
-								   CloseCurrentPage();
+								   wxMessageDialog *dial = new wxMessageDialog(NULL, wxT("The file isn't saved! Are you sure to close?"), wxT("AMX TextEdit"), wxYES_NO | wxNO_DEFAULT | wxICON_WARNING);
+								   
+								   int ret = dial->ShowModal();
+								   dial->Destroy();
+								   
+								   if (ret != wxID_YES)
+								   {
+									   return;
+								   }
 							   }
+
+							   CloseCurrentPage();
 	}
 		break;
 
