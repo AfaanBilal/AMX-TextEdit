@@ -777,16 +777,10 @@ void AMXTextEdit::Options(wxCommandEvent& event)
 							   {
 								   page->txtBody->StyleSetFont(wxSTC_STYLE_DEFAULT, fontDialog->GetFontData().GetChosenFont());
 								   
-								   if (page->ccppSyntaxHighlighting)
-								   {
-									   EnableCPPSyntaxHighlighting(false);
-									   EnableCPPSyntaxHighlighting(true);
-								   }
-								   else
-								   {
-									   EnableCPPSyntaxHighlighting(true);
-									   EnableCPPSyntaxHighlighting(false);
-								   }
+								   bool synHylyt = page->ccppSyntaxHighlighting;
+
+								   EnableCPPSyntaxHighlighting(!synHylyt);
+								   EnableCPPSyntaxHighlighting(synHylyt);
 								   
 								   GetStatusBar()->SetStatusText(wxT("Font loaded"));
 							   }
