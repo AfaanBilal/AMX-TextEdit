@@ -513,7 +513,7 @@ void AMXTextEdit::OnCharAdded(wxStyledTextEvent &event)
 		if (lineInd < 0) lineInd = 0;
 
 		page->txtBody->SetLineIndentation(currentLine, lineInd);
-		page->txtBody->GotoPos(page->txtBody->GetLineIndentPosition(currentLine) + lineInd + (lineInd == 0 ? 1 : 0));
+		page->txtBody->GotoPos(page->txtBody->GetLineEndPosition(currentLine));
 	}
 }
 
