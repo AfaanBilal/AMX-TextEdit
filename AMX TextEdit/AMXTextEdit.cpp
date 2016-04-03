@@ -776,6 +776,13 @@ void AMXTextEdit::Options(wxCommandEvent& event)
 							   if (fontDialog->ShowModal() == wxID_OK)
 							   {
 								   page->txtBody->StyleSetFont(wxSTC_STYLE_DEFAULT, fontDialog->GetFontData().GetChosenFont());
+								   
+								   if (page->ccppSyntaxHighlighting)
+								   {
+									   EnableCPPSyntaxHighlighting(false);
+									   EnableCPPSyntaxHighlighting(true);
+								   }
+								   
 								   GetStatusBar()->SetStatusText(wxT("Font loaded"));
 							   }
 
@@ -930,6 +937,7 @@ AMXPage* AMXTextEdit::NewPage(wxNotebook* book)
 	wxBoxSizer* vSizer = new wxBoxSizer(wxVERTICAL);
 
 	page->txtBody = new wxStyledTextCtrl(page, -1, wxDefaultPosition, wxDefaultSize, wxSTC_STYLE_LINENUMBER);
+	page->txtBody->StyleSetSize(wxSTC_STYLE_DEFAULT, 12);
 	page->txtBody->StyleClearAll();
 	page->txtBody->SetMarginWidth(MARGIN_LINE_NUMBERS, 30);
 	page->txtBody->SetMarginType(MARGIN_LINE_NUMBERS, wxSTC_MARGIN_NUMBER);
