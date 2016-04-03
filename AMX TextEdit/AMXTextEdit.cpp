@@ -71,9 +71,9 @@ void AMXTextEdit::CreateMenus()
 	mainMenu->Append(optionsMenu, wxT("&Options"));
 
 	wxMenu* ccppMenu = new wxMenu;
-	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_COMPILE_RUN, wxT("Compile and Run"), wxT("Compile and execute the C/C++ file")));
-	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_COMPILE, wxT("Compile"), wxT("Compile the C/C++ file")));
-	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_RUN, wxT("Run"), wxT("Execute the C/C++ file")));
+	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_COMPILE_RUN, wxT("Compile and Run\tAlt+R"), wxT("Compile and execute the C/C++ file")));
+	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_COMPILE, wxT("Compile\tAlt+C"), wxT("Compile the C/C++ file")));
+	ccppMenu->Append(new wxMenuItem(ccppMenu, ID_MENU_RUN, wxT("Run\tAlt+Shift+R"), wxT("Execute the C/C++ file")));
 	mainMenu->Append(ccppMenu, wxT("C/C++"));
 
 	wxMenu* helpMenu = new wxMenu;
