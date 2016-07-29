@@ -15,6 +15,7 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	lastFindPos = -1;
 
 	CreateMenus();
+    AssignKeyWords();
 
 	mainBook = new wxNotebook(this, -1, wxDefaultPosition, wxDefaultSize, wxNB_TOP);
 
@@ -23,6 +24,27 @@ AMXTextEdit::AMXTextEdit(const wxString& title)
 	Centre();
 
 	AddNewPage();
+}
+
+void AMXTextEdit::AssignKeyWords()
+{
+    this->keywords["C1"] = "auto break case char const continue default do double else enum extern float \
+                            for goto if int long register return short signed sizeof static struct switch  \
+                            typedef union unsigned void volatile while";
+    this->keywords["C2"] = "main printf scanf";
+
+    this->keywords["CPP1"] = "auto break case char const continue default do double else enum extern float \
+                              for goto if int long register return short signed sizeof static struct switch  \
+                              typedef union unsigned void volatile while \
+                              asm bool catch class const_cast delete dynamic_cast explicit false friend inline \
+                              mutable namespace new operator private public protected reinterpret_cast static_cast \
+                              template this throw true try typeid typename using virtual wchar_t \
+                                                              and and_eq bitand bitor compl not not_eq or or_eq xor xor_eq";
+    this->keywords["CPP2"] = "cin cout endl include INT_MIN INT_MAX iomanip iostream main MAX_RAND npos NULL std string";
+    this->keywords["PHP1"] = "array break case continue default do echo else enum for goto if print return struct switch while \
+                              function class new true false namespace using operator private public protected interface \
+                              try catch throw and or not include require require_once";
+    this->keywords["PHP2"] = "null __FILE__ __CLASS__ __DIR__ __FUNCTION__ __LINE__ __METHOD__ __NAMESPACE__";
 }
 
 void AMXTextEdit::CreateMenus()
@@ -62,10 +84,20 @@ void AMXTextEdit::CreateMenus()
 	menuTabPosOps->Append(new wxMenuItem(menuTabPosOps, ID_MENU_TABSTOP, wxT("Top"), wxT("Set tabs on top"), wxITEM_RADIO));
 	menuTabPosOps->Append(new wxMenuItem(menuTabPosOps, ID_MENU_TABSBOTTOM, wxT("Bottom"), wxT("Set tabs on bottom"), wxITEM_RADIO));
 	menuTabPos->SetSubMenu(menuTabPosOps);
+    
+    optionsMenu->Append(menuTabPos);
 
-	optionsMenu->Append(menuTabPos);
-	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECPP, wxT("C/C++ Syntax Highlighting"), wxT("Toggle syntax highlighting for C/C++"), wxITEM_CHECK));
-	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECF, wxT("Code Folding"), wxT("Toggle code folding"), wxITEM_CHECK));
+    wxMenuItem* menuSynHighlight = new wxMenuItem(optionsMenu, -1, wxT("Syntax Highlighting"));
+
+    wxMenu* menuSynHighlightOps = new wxMenu;
+    menuSynHighlightOps->Append(new wxMenuItem(menuSynHighlightOps, ID_MENU_SYNHIGHLIGHT_C, wxT("C"), wxT("C Syntax Highlighting"), wxITEM_RADIO));
+    menuSynHighlightOps->Append(new wxMenuItem(menuSynHighlightOps, ID_MENU_SYNHIGHLIGHT_CPP, wxT("C++"), wxT("C++ Syntax Highlighting"), wxITEM_RADIO));
+    menuSynHighlightOps->Append(new wxMenuItem(menuSynHighlightOps, ID_MENU_SYNHIGHLIGHT_PHP, wxT("PHP"), wxT("PHP Syntax Highlighting"), wxITEM_RADIO));
+    menuSynHighlight->SetSubMenu(menuSynHighlightOps);
+
+	optionsMenu->Append(menuSynHighlight);
+	
+    optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLECF, wxT("Code Folding"), wxT("Toggle code folding"), wxITEM_CHECK));
 	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLEAI, wxT("Auto Indent"), wxT("Toggle auto-indentation"), wxITEM_CHECK));
 	optionsMenu->Append(new wxMenuItem(optionsMenu, ID_MENU_ENABLEIG, wxT("Indent Guides"), wxT("Toggle indentation guides"), wxITEM_CHECK));
 	mainMenu->Append(optionsMenu, wxT("&Options"));
@@ -115,6 +147,9 @@ void AMXTextEdit::AssignEventHandlers()
 	Connect(ID_MENU_SELECTFONT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_TABSTOP, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_TABSBOTTOM, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
+    Connect(ID_MENU_SYNHIGHLIGHT_C, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
+    Connect(ID_MENU_SYNHIGHLIGHT_CPP, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
+    Connect(ID_MENU_SYNHIGHLIGHT_PHP, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_ENABLECPP, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_ENABLECF, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
 	Connect(ID_MENU_ENABLEAI, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(AMXTextEdit::Options));
@@ -279,7 +314,7 @@ void AMXTextEdit::EnableCCPPMenus(bool e = true)
 	FindItemInMenuBar(ID_MENU_RUN)->Enable(e);
 }
 
-void AMXTextEdit::EnableCPPSyntaxHighlighting(bool e = true)
+void AMXTextEdit::EnableSyntaxHighlighting(bool e = true, Language lang = Language::C)
 {
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
 
@@ -303,14 +338,28 @@ void AMXTextEdit::EnableCPPSyntaxHighlighting(bool e = true)
 		page->txtBody->StyleSetBold(wxSTC_C_WORD2, true);
 		page->txtBody->StyleSetBold(wxSTC_C_COMMENTDOCKEYWORD, true);
 
-		page->txtBody->SetKeyWords(0, wxT("auto break case char const continue default do double else enum extern float \
-										   for goto if int long register return short signed sizeof static struct switch  \
-										   typedef union unsigned void volatile while \
-										   asm bool catch class const_cast delete dynamic_cast explicit false friend inline \
-										   mutable namespace new operator private public protected reinterpret_cast static_cast \
-										   template this throw true try typeid typename using virtual wchar_t \
-										   and and_eq bitand bitor compl not not_eq or or_eq xor xor_eq"));
-		page->txtBody->SetKeyWords(1, wxT("cin cout endl include INT_MIN INT_MAX iomanip iostream main MAX_RAND npos NULL std string"));
+        wxString keywords1 = "";
+        wxString keywords2 = "";
+        switch (lang)
+        {
+        case C:
+            keywords1 = this->keywords["C1"];
+            keywords2 = this->keywords["C2"];
+            break;
+
+        case CPP:
+            keywords1 = this->keywords["CPP1"];
+            keywords2 = this->keywords["CPP2"];
+            break;
+
+        case PHP:
+            keywords1 = this->keywords["PHP1"];
+            keywords2 = this->keywords["PHP2"];
+            break;
+
+        }
+		page->txtBody->SetKeyWords(0, keywords1);
+        page->txtBody->SetKeyWords(1, keywords2);
 	}
 	else
 	{
@@ -420,26 +469,33 @@ void AMXTextEdit::EnableCPPMode(bool e = true)
 {
 	AMXPage* page = (AMXPage*)(mainBook->GetCurrentPage());
 
-	if (page->filename.EndsWith(wxT(".c")) ||
-		page->filename.EndsWith(wxT(".C")) ||
-		page->filename.EndsWith(wxT(".cpp")) ||
-		page->filename.EndsWith(wxT(".CPP")) ||
-		page->filename.EndsWith(wxT(".h")) ||
-		page->filename.EndsWith(wxT(".H"))
-		)
-	{
-		EnableCPPSyntaxHighlighting(e);
-		EnableCodeFolding(e);
-		FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(e);
-		FindItemInMenuBar(ID_MENU_ENABLECF)->Check(e);
-		page->ccpp = e;
-		EnableCCPPMenus(e);
-		EnableAutoIndent(e);
-		EnableIndentGuides(e);
+    if (page->filename.EndsWith(wxT(".c")) || page->filename.EndsWith(wxT(".C")))
+    {
+        EnableSyntaxHighlighting(e);
+        EnableCCPPMenus(e);
+        page->ccpp = e;
+    }
 
-		wxBookCtrlEvent evt;
-		PageChanged(evt);
-	}
+    if (page->filename.EndsWith(wxT(".cpp")) || page->filename.EndsWith(wxT(".CPP"))
+        || page->filename.EndsWith(wxT(".h")) || page->filename.EndsWith(wxT(".H"))
+        || page->filename.EndsWith(wxT(".hpp")) || page->filename.EndsWith(wxT(".HPP")))
+    {
+        EnableSyntaxHighlighting(e, Language::CPP);
+        EnableCCPPMenus(e);
+        page->ccpp = e;
+    }
+
+    if (page->filename.EndsWith(wxT(".php")) || page->filename.EndsWith(wxT(".PHP")))
+        EnableSyntaxHighlighting(e, Language::PHP);
+    
+    EnableCodeFolding(e);
+    FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(e);
+    FindItemInMenuBar(ID_MENU_ENABLECF)->Check(e);
+    EnableAutoIndent(e);
+    EnableIndentGuides(e);
+
+    wxBookCtrlEvent evt;
+    PageChanged(evt);
 }
 
 void AMXTextEdit::CloseCurrentPage()
@@ -796,8 +852,8 @@ void AMXTextEdit::Options(wxCommandEvent& event)
 								   
 								   bool synHylyt = page->ccppSyntaxHighlighting;
 
-								   EnableCPPSyntaxHighlighting(!synHylyt);
-								   EnableCPPSyntaxHighlighting(synHylyt);
+								   EnableSyntaxHighlighting(!synHylyt);
+								   EnableSyntaxHighlighting(synHylyt);
 								   
 								   GetStatusBar()->SetStatusText(wxT("Font loaded"));
 							   }
@@ -815,10 +871,18 @@ void AMXTextEdit::Options(wxCommandEvent& event)
 		mainBook->SetWindowStyle(wxNB_BOTTOM);
 		Redraw();
 		break;
+    
+    case ID_MENU_SYNHIGHLIGHT_C:
+        EnableSyntaxHighlighting(true, Language::C);
+        break;
 
-	case ID_MENU_ENABLECPP:
-		EnableCPPSyntaxHighlighting(FindItemInMenuBar(ID_MENU_ENABLECPP)->IsChecked());
-		break;
+    case ID_MENU_SYNHIGHLIGHT_CPP:
+        EnableSyntaxHighlighting(true, Language::CPP);
+        break;
+
+    case ID_MENU_SYNHIGHLIGHT_PHP:
+        EnableSyntaxHighlighting(true, Language::PHP);
+        break;
 
 	case ID_MENU_ENABLECF:
 		EnableCodeFolding(FindItemInMenuBar(ID_MENU_ENABLECF)->IsChecked());
@@ -928,7 +992,6 @@ void AMXTextEdit::PageChanged(wxBookCtrlEvent& event)
 
 	EnableCCPPMenus(page->ccpp);
 	FindItemInMenuBar(ID_MENU_ENABLECF)->Check(page->codeFolding);
-	FindItemInMenuBar(ID_MENU_ENABLECPP)->Check(page->ccppSyntaxHighlighting);
 	FindItemInMenuBar(ID_MENU_ENABLEAI)->Check(page->autoIndent);
 	FindItemInMenuBar(ID_MENU_ENABLEIG)->Check(page->indentGuides);
 }

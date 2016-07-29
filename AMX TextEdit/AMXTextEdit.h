@@ -23,10 +23,20 @@
 #include "AMXAboutDlg.h"
 #include "AMXCCPPErrorDlg.h"
 
+WX_DECLARE_STRING_HASH_MAP(wxString, wxStringHashMap);
+
 enum
 {
 	MARGIN_LINE_NUMBERS,
 	MARGIN_FOLD
+};
+
+enum Language
+{
+    C,
+    CPP,
+    PHP,
+    JS
 };
 
 class AMXTextEdit : public wxFrame
@@ -36,14 +46,15 @@ class AMXTextEdit : public wxFrame
 	wxFindReplaceData frData;
 	wxFindReplaceDialog *frDlg;
 	AMXCCPPErrorDlg *errorDlg;
+    wxStringHashMap keywords;
 	int lastFindPos;
 
 	AMXPage* NewPage(wxNotebook* book);
 	void AddNewPage();
-
+    void AssignKeyWords();
 	void EnableEditMenus(bool e);
 	void EnableCCPPMenus(bool e);
-	void EnableCPPSyntaxHighlighting(bool e);
+	void EnableSyntaxHighlighting(bool e, Language lang);
 	void EnableCodeFolding(bool e);
 	void EnableAutoIndent(bool e);
 	void EnableIndentGuides(bool e);
@@ -100,6 +111,10 @@ const int ID_MENU_ENABLECPP = 203;
 const int ID_MENU_ENABLECF = 204;
 const int ID_MENU_ENABLEAI = 205;
 const int ID_MENU_ENABLEIG = 206;
+
+const int ID_MENU_SYNHIGHLIGHT_C = 207;
+const int ID_MENU_SYNHIGHLIGHT_CPP = 208;
+const int ID_MENU_SYNHIGHLIGHT_PHP = 209;
 
 const int ID_MENU_COMPILE_RUN = 301;
 const int ID_MENU_COMPILE = 302;
