@@ -4,7 +4,7 @@ AMX TextEdit
 Author: **Afaan Bilal ([@AfaanBilal](https://github.com/AfaanBilal))**   
 Author URL: **[Google+](https://google.com/+AfaanBilal)**
 
-#### Project page: [afaan.ml/AMX-TextEdit](https://afaan.ml/AMX-TextEdit)
+#### Project page: [afaan.me/AMX-TextEdit](https://afaan.me/AMX-TextEdit)
 #### Download: [Executable, Latest Release](https://github.com/AfaanBilal/AMX-TextEdit/releases/latest)
 
 ## Introduction
