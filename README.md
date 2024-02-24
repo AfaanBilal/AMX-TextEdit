@@ -1,17 +1,20 @@
 AMX TextEdit
 ==============
 
-Author: **[Afaan Bilal](https://afaan.dev)**  
+Author: **[Afaan Bilal](https://afaan.dev)**
 
-#### Project page: [afaan.dev/AMX-TextEdit](https://afaan.dev/AMX-TextEdit)
-#### Download: [Executable, Latest Release](https://github.com/AfaanBilal/AMX-TextEdit/releases/latest)
+Project page: [afaan.dev/AMX-TextEdit](https://afaan.dev/AMX-TextEdit)
+
+Download: [Executable, Latest Release](https://github.com/AfaanBilal/AMX-TextEdit/releases/latest)
+
+![AMX TextEdit](https://afaan.dev/screenshots/amx-textedit.png)
 
 ## Introduction
 **AMX TextEdit** is a simple, fast, tabbed text editor written in C++. A lightweight replacement for your notepad with tabs!
 
 ## Contributing
 All contributions are welcome. Please create an issue first for any feature request
-or bug. Then fork the repository, create a branch and make any changes to fix the bug 
+or bug. Then fork the repository, create a branch and make any changes to fix the bug
 or add the feature and create a pull request. That's it!
 Thanks!
 
