@@ -3,8 +3,6 @@ AMX TextEdit
 
 Author: **[Afaan Bilal](https://afaan.dev)**
 
-Project page: [afaan.dev/AMX-TextEdit](https://afaan.dev/AMX-TextEdit)
-
 Download: [Executable, Latest Release](https://github.com/AfaanBilal/AMX-TextEdit/releases/latest)
 
 ![AMX TextEdit](https://afaan.dev/screenshots/amx-textedit.png)
